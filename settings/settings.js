@@ -53,19 +53,8 @@ async function loadSettings() {
         delayRange.value = settings.delaySeconds;
         delayValue.textContent = settings.delaySeconds;
 
-        // Update theme radio buttons
-        switch (settings.darkMode) {
-            case 'light':
-                themeLight.checked = true;
-                break;
-            case 'dark':
-                themeDark.checked = true;
-                break;
-            case 'auto':
-            default:
-                themeAuto.checked = true;
-                break;
-        }
+        // Update theme switcher
+        updateThemeSwitcher(settings.darkMode);
 
         // Apply theme
         applyTheme(settings.darkMode);
@@ -87,10 +76,10 @@ function setupEventListeners() {
     delayRange.addEventListener('input', handleDelayInput);
     delayRange.addEventListener('change', handleDelayChange);
 
-    // Theme radio buttons
-    themeLight.addEventListener('change', () => handleThemeChange('light'));
-    themeDark.addEventListener('change', () => handleThemeChange('dark'));
-    themeAuto.addEventListener('change', () => handleThemeChange('auto'));
+    // Theme switcher buttons
+    if (themeLight) themeLight.addEventListener('click', () => handleThemeChange('light'));
+    if (themeDark) themeDark.addEventListener('click', () => handleThemeChange('dark'));
+    if (themeAuto) themeAuto.addEventListener('click', () => handleThemeChange('auto'));
 
     // Reset settings button
     resetBtn.addEventListener('click', handleReset);
@@ -102,6 +91,31 @@ function setupEventListeners() {
 
     // Listen for storage changes (sync with popup)
     chrome.storage.onChanged.addListener(handleStorageChange);
+}
+
+/**
+ * Update theme switcher button states
+ * @param {string} theme - 'light' | 'dark' | 'auto'
+ */
+function updateThemeSwitcher(theme) {
+    // Remove active class from all buttons
+    [themeLight, themeDark, themeAuto].forEach(btn => {
+        if (btn) btn.classList.remove('theme-switcher__btn--active');
+    });
+
+    // Add active class to current theme button
+    switch (theme) {
+        case 'light':
+            if (themeLight) themeLight.classList.add('theme-switcher__btn--active');
+            break;
+        case 'dark':
+            if (themeDark) themeDark.classList.add('theme-switcher__btn--active');
+            break;
+        case 'auto':
+        default:
+            if (themeAuto) themeAuto.classList.add('theme-switcher__btn--active');
+            break;
+    }
 }
 
 /**
@@ -207,6 +221,9 @@ async function handleThemeChange(theme) {
         await chrome.storage.sync.set({ darkMode: theme });
         console.log('[LazyShorts Settings] Theme updated:', theme);
 
+        // Update button states
+        updateThemeSwitcher(theme);
+
         // Apply theme immediately
         applyTheme(theme);
     } catch (error) {
@@ -277,17 +294,7 @@ function handleStorageChange(changes, areaName) {
 
     if (changes.darkMode) {
         const theme = changes.darkMode.newValue;
-        switch (theme) {
-            case 'light':
-                themeLight.checked = true;
-                break;
-            case 'dark':
-                themeDark.checked = true;
-                break;
-            case 'auto':
-                themeAuto.checked = true;
-                break;
-        }
+        updateThemeSwitcher(theme);
         applyTheme(theme);
     }
 

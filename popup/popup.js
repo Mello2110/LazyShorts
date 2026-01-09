@@ -8,6 +8,10 @@ const enableToggle = document.getElementById('enableToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const coffeeBtn = document.getElementById('coffeeBtn');
 const skipCountDisplay = document.getElementById('skipCountDisplay');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+// Current theme state
+let currentTheme = 'auto';
 
 /**
  * Initialize popup
@@ -41,8 +45,9 @@ async function loadSettings() {
         // Update toggle state
         enableToggle.checked = settings.enabled;
 
-        // Apply theme
-        applyTheme(settings.darkMode);
+        // Store and apply theme
+        currentTheme = settings.darkMode;
+        applyTheme(currentTheme);
 
         console.log('[LazyShorts Popup] Settings loaded:', settings);
     } catch (error) {
@@ -80,6 +85,11 @@ function setupEventListeners() {
     // Toggle auto-skip on/off
     enableToggle.addEventListener('change', handleToggleChange);
 
+    // Toggle dark mode
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', handleThemeToggle);
+    }
+
     // Open settings page
     settingsBtn.addEventListener('click', openSettings);
 
@@ -88,6 +98,30 @@ function setupEventListeners() {
 
     // Listen for storage changes (sync with settings page)
     chrome.storage.onChanged.addListener(handleStorageChange);
+}
+
+/**
+ * Handle theme toggle button click
+ * Cycles: auto -> light -> dark -> auto (or light <-> dark if already set)
+ */
+async function handleThemeToggle() {
+    // Determine effective current theme
+    let effectiveTheme = currentTheme;
+    if (currentTheme === 'auto') {
+        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+
+    // Toggle to opposite theme
+    const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
+
+    try {
+        await chrome.storage.sync.set({ darkMode: newTheme });
+        currentTheme = newTheme;
+        applyTheme(newTheme);
+        console.log('[LazyShorts Popup] Theme toggled to:', newTheme);
+    } catch (error) {
+        console.error('[LazyShorts Popup] Failed to toggle theme:', error);
+    }
 }
 
 /**
@@ -148,7 +182,8 @@ function handleStorageChange(changes, areaName) {
 
     // Update theme if darkMode changed
     if (changes.darkMode) {
-        applyTheme(changes.darkMode.newValue);
+        currentTheme = changes.darkMode.newValue;
+        applyTheme(currentTheme);
     }
 
     // Update skip count display if changed
