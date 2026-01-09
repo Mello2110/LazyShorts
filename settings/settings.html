@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LazyShorts Settings</title>
+    <link rel="stylesheet" href="../styles/design-system.css">
+    <link rel="stylesheet" href="settings.css">
+</head>
+
+<body class="settings">
+    <div class="settings__container">
+        <header class="settings__header">
+            <h1 class="settings__title">LazyShorts Settings</h1>
+            <p class="settings__subtitle">Configure auto-skip behavior for YouTube Shorts</p>
+        </header>
+
+        <main class="settings__body">
+            <!-- Enable/Disable Section -->
+            <section class="settings__section">
+                <h2 class="settings__section-title">Auto-Skip</h2>
+
+                <label class="toggle">
+                    <input type="checkbox" class="toggle__input" id="enableToggle" aria-label="Enable auto-skip">
+                    <span class="toggle__slider"></span>
+                    <span class="toggle__label">Enable automatic skipping</span>
+                </label>
+
+                <p class="settings__help-text">
+                    When enabled, LazyShorts will automatically advance to the next Short when the current one finishes
+                    playing.
+                </p>
+            </section>
+
+            <!-- Delay Section -->
+            <section class="settings__section">
+                <h2 class="settings__section-title">Delay</h2>
+
+                <div class="settings__control">
+                    <label for="delayRange" class="settings__label">
+                        Delay before skipping: <strong id="delayValue">0</strong> seconds
+                    </label>
+                    <input type="range" id="delayRange" class="settings__range" min="0" max="5" step="1" value="0"
+                        aria-label="Delay in seconds" aria-describedby="delayHelp">
+                    <div class="settings__range-labels">
+                        <span>0s</span>
+                        <span>1s</span>
+                        <span>2s</span>
+                        <span>3s</span>
+                        <span>4s</span>
+                        <span>5s</span>
+                    </div>
+                </div>
+
+                <p class="settings__help-text" id="delayHelp">
+                    Add a delay between the video ending and skipping to the next Short. Useful if you need time to
+                    react.
+                </p>
+            </section>
+
+            <!-- Theme Section -->
+            <section class="settings__section">
+                <h2 class="settings__section-title">Theme</h2>
+
+                <div class="settings__radio-group" role="radiogroup" aria-label="Theme selection">
+                    <label class="settings__radio">
+                        <input type="radio" name="theme" value="light" id="themeLight" class="settings__radio-input">
+                        <span class="settings__radio-label">Light</span>
+                    </label>
+
+                    <label class="settings__radio">
+                        <input type="radio" name="theme" value="dark" id="themeDark" class="settings__radio-input">
+                        <span class="settings__radio-label">Dark</span>
+                    </label>
+
+                    <label class="settings__radio">
+                        <input type="radio" name="theme" value="auto" id="themeAuto" class="settings__radio-input"
+                            checked>
+                        <span class="settings__radio-label">Auto (system preference)</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Reset Section -->
+            <section class="settings__section settings__section--danger">
+                <h2 class="settings__section-title">Reset Settings</h2>
+
+                <p class="settings__help-text">
+                    Reset all settings to their default values.
+                </p>
+
+                <button type="button" id="resetBtn" class="settings__button settings__button--danger">
+                    Reset to Defaults
+                </button>
+            </section>
+        </main>
+
+        <footer class="settings__footer">
+            <p class="settings__credit">LazyShorts by <strong>Mellow Solutions</strong></p>
+            <p class="settings__version">Version 1.0.0</p>
+            <div class="settings__links">
+                <a href="https://buymeacoffee.com/[YOUR_USERNAME]" target="_blank" rel="noopener noreferrer"
+                    class="settings__link">
+                    Support Development ☕
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+
+</html>
