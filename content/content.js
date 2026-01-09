@@ -30,6 +30,23 @@ let videoEndedListener = null;
 let isInitialized = false;
 
 /**
+ * Increment the skip count in storage
+ * @returns {Promise<number|null>} New skip count value or null on error
+ */
+async function incrementSkipCount() {
+    try {
+        const result = await chrome.storage.sync.get({ skipCount: 0 });
+        const newCount = result.skipCount + 1;
+        await chrome.storage.sync.set({ skipCount: newCount });
+        console.log('[LazyShorts] Skip count incremented to:', newCount);
+        return newCount;
+    } catch (error) {
+        console.error('[LazyShorts] Failed to increment skip count:', error);
+        return null;
+    }
+}
+
+/**
  * Initialize the extension
  */
 async function init() {
@@ -194,6 +211,9 @@ function clickNextButton(button) {
         button.click();
         console.log('[LazyShorts] Clicked "Next" button');
 
+        // Increment skip counter
+        incrementSkipCount();
+
         // Verify navigation occurred after short delay
         setTimeout(() => {
             console.log('[LazyShorts] Current URL after click:', window.location.href);
@@ -228,6 +248,9 @@ function tryKeyboardNavigation() {
 
         document.dispatchEvent(keyEvent);
         console.log('[LazyShorts] Arrow Down key event dispatched');
+
+        // Increment skip counter
+        incrementSkipCount();
 
         // Verify navigation
         setTimeout(() => {

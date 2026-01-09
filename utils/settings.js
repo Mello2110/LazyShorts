@@ -7,7 +7,8 @@
 const DEFAULT_SETTINGS = {
     enabled: true,
     delaySeconds: 0,
-    darkMode: 'auto' // 'light' | 'dark' | 'auto'
+    darkMode: 'auto', // 'light' | 'dark' | 'auto'
+    skipCount: 0 // Counter for auto-skipped Shorts
 };
 
 /**
@@ -123,8 +124,69 @@ function validateSetting(key, value) {
             }
             break;
 
+        case 'skipCount':
+            if (typeof value !== 'number') {
+                throw new Error('Setting "skipCount" must be a number');
+            }
+            if (value < 0) {
+                throw new Error('Setting "skipCount" must be non-negative');
+            }
+            if (!Number.isInteger(value)) {
+                throw new Error('Setting "skipCount" must be an integer');
+            }
+            break;
+
         default:
             throw new Error(`Unknown setting key: "${key}"`);
+    }
+}
+
+/**
+ * Get the current skip count
+ * 
+ * @returns {Promise<number>} Current skip count
+ */
+export async function getSkipCount() {
+    try {
+        const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
+        return skipCount;
+    } catch (error) {
+        console.error('[LazyShorts] Failed to get skip count:', error);
+        return 0;
+    }
+}
+
+/**
+ * Increment the skip count by 1
+ * 
+ * @returns {Promise<number>} New skip count value
+ */
+export async function incrementSkipCount() {
+    try {
+        const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
+        const newCount = skipCount + 1;
+        await chrome.storage.sync.set({ skipCount: newCount });
+        console.log('[LazyShorts] Skip count incremented to:', newCount);
+        return newCount;
+    } catch (error) {
+        console.error('[LazyShorts] Failed to increment skip count:', error);
+        return null;
+    }
+}
+
+/**
+ * Reset the skip count to 0
+ * 
+ * @returns {Promise<boolean>} True if successful, false otherwise
+ */
+export async function resetSkipCount() {
+    try {
+        await chrome.storage.sync.set({ skipCount: 0 });
+        console.log('[LazyShorts] Skip count reset to 0');
+        return true;
+    } catch (error) {
+        console.error('[LazyShorts] Failed to reset skip count:', error);
+        return false;
     }
 }
 

@@ -4,7 +4,7 @@
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-blue?logo=google-chrome)](https://chrome.google.com/webstore)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
-[![Version](https://img.shields.io/badge/version-1.0.0-orange)](#)
+[![Version](https://img.shields.io/badge/version-1.1.0-orange)](#)
 
 ---
 
@@ -12,6 +12,7 @@
 
 - 🚀 **Automatic Skipping**: Seamlessly advance to the next YouTube Short after the current one ends
 - ⏱️ **Configurable Delay**: Set a delay (0-5 seconds) before skipping
+- 📊 **Skip Counter**: Track how many Shorts have been automatically skipped
 - 🎨 **Clean UI**: Minimalist design inspired by YouTube's aesthetic
 - 🌓 **Dark Mode**: Supports light, dark, and auto (system preference) themes
 - ⚡ **Lightweight**: Minimal performance impact (< 5% CPU, < 50MB memory)
@@ -68,6 +69,7 @@ Access the settings page by clicking the settings icon in the popup, or right-cl
 - **Enable Auto-Skip**: Turn the extension on or off
 - **Delay**: Set how many seconds to wait before skipping (0-5 seconds)
 - **Theme**: Choose Light, Dark, or Auto (follows system preference)
+- **Statistics**: View your total skip count and reset it if desired
 - **Reset**: Restore all settings to defaults
 
 ---
@@ -230,6 +232,17 @@ This project is licensed under the **MIT License**. See [LICENSE](#) for details
 ---
 
 ## 📊 Version History
+
+### v1.1.0 (January 2026)
+- 📊 **Skip Counter**: Track total Shorts automatically skipped
+- Counter display in popup and settings page
+- Reset counter functionality with confirmation
+- Locale-aware number formatting
+
+### v1.0.1 (January 2026)
+- 🛠️ Fixed auto-skip not working on subsequent Shorts
+- 🌐 Added support for non-www and mobile YouTube URLs
+- ⌨️ Implemented keyboard navigation fallback
 
 ### v1.0.0 (January 2026)
 - ✨ Initial release

@@ -25,6 +25,17 @@
     padding: var(--space-base);
     border-bottom: 1px solid var(--color-border-primary);
     background-color: var(--color-bg-secondary);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+}
+
+.popup__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
 }
 
 .popup__title {
@@ -32,7 +43,6 @@
     font-weight: var(--font-weight-bold);
     color: var(--color-text-primary);
     margin: 0;
-    text-align: center;
 }
 
 /* ================================
@@ -122,6 +132,32 @@
 }
 
 /* ================================
+   STATS
+   ================================ */
+
+.popup__stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-base);
+    background-color: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-primary);
+}
+
+.popup__stats-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-normal);
+}
+
+.popup__stats-value {
+    font-size: var(--font-size-lg);
+    color: var(--color-primary);
+    font-weight: var(--font-weight-bold);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ================================
    ACTIONS
    ================================ */
 
@@ -201,6 +237,15 @@
     font-size: var(--font-size-xs);
     color: var(--color-text-tertiary);
     font-weight: var(--font-weight-normal);
+}
+
+.popup__credit-link {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.popup__credit-link:hover {
+    text-decoration: underline;
 }
 
 /* ================================

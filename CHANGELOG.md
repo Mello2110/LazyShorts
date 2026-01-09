@@ -5,6 +5,21 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-09
+
+### Added
+- 📊 **Skip Counter**: Track total Shorts automatically skipped
+- Counter display in extension popup (compact view)
+- Counter display in settings page with detailed statistics
+- Reset counter functionality with confirmation dialog
+- Locale-aware number formatting (e.g., "1,234" in US locale)
+- Cross-device sync for counter via `chrome.storage.sync`
+
+### Technical Details
+- Added `skipCount` to storage schema (default: 0)
+- Implemented counter increment in content script after auto-skip
+- Added counter display and formatting logic to popup and settings
+
 ## [1.0.1] - 2026-01-09
 
 ### Fixed

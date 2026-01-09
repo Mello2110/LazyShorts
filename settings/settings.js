@@ -11,6 +11,8 @@ const themeLight = document.getElementById('themeLight');
 const themeDark = document.getElementById('themeDark');
 const themeAuto = document.getElementById('themeAuto');
 const resetBtn = document.getElementById('resetBtn');
+const skipCountDisplay = document.getElementById('skipCountDisplay');
+const resetCountBtn = document.getElementById('resetCountBtn');
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -27,6 +29,9 @@ async function init() {
 
     // Load current settings
     await loadSettings();
+
+    // Load skip count
+    await loadSkipCount();
 
     // Setup event listeners
     setupEventListeners();
@@ -87,11 +92,70 @@ function setupEventListeners() {
     themeDark.addEventListener('change', () => handleThemeChange('dark'));
     themeAuto.addEventListener('change', () => handleThemeChange('auto'));
 
-    // Reset button
+    // Reset settings button
     resetBtn.addEventListener('click', handleReset);
+
+    // Reset counter button
+    if (resetCountBtn) {
+        resetCountBtn.addEventListener('click', handleResetCount);
+    }
 
     // Listen for storage changes (sync with popup)
     chrome.storage.onChanged.addListener(handleStorageChange);
+}
+
+/**
+ * Load skip count from storage and update display
+ */
+async function loadSkipCount() {
+    try {
+        const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
+        updateSkipCountDisplay(skipCount);
+        console.log('[LazyShorts Settings] Skip count loaded:', skipCount);
+    } catch (error) {
+        console.error('[LazyShorts Settings] Failed to load skip count:', error);
+    }
+}
+
+/**
+ * Update the skip count display with formatted number
+ * @param {number} count 
+ */
+function updateSkipCountDisplay(count) {
+    if (skipCountDisplay) {
+        skipCountDisplay.textContent = new Intl.NumberFormat().format(count);
+    }
+}
+
+/**
+ * Handle reset counter button click
+ */
+async function handleResetCount() {
+    const confirmed = confirm('Are you sure you want to reset the skip counter to 0?');
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await chrome.storage.sync.set({ skipCount: 0 });
+        updateSkipCountDisplay(0);
+        console.log('[LazyShorts Settings] Skip count reset to 0');
+
+        // Visual feedback
+        if (resetCountBtn) {
+            const originalText = resetCountBtn.textContent;
+            resetCountBtn.textContent = '✓ Reset successful';
+            resetCountBtn.disabled = true;
+            setTimeout(() => {
+                resetCountBtn.textContent = originalText;
+                resetCountBtn.disabled = false;
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('[LazyShorts Settings] Failed to reset skip count:', error);
+        alert('Failed to reset counter. Please try again.');
+    }
 }
 
 /**
@@ -225,6 +289,11 @@ function handleStorageChange(changes, areaName) {
                 break;
         }
         applyTheme(theme);
+    }
+
+    // Update skip count display if changed
+    if (changes.skipCount) {
+        updateSkipCountDisplay(changes.skipCount.newValue);
     }
 }
 

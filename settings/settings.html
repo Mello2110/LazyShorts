@@ -12,7 +12,10 @@
 <body class="settings">
     <div class="settings__container">
         <header class="settings__header">
-            <h1 class="settings__title">LazyShorts Settings</h1>
+            <div class="settings__header-row">
+                <img src="../assets/logo-small.png" alt="LazyShorts Logo" class="settings__logo">
+                <h1 class="settings__title">LazyShorts Settings</h1>
+            </div>
             <p class="settings__subtitle">Configure auto-skip behavior for YouTube Shorts</p>
         </header>
 
@@ -82,6 +85,24 @@
                 </div>
             </section>
 
+            <!-- Statistics Section -->
+            <section class="settings__section">
+                <h2 class="settings__section-title">Statistics</h2>
+
+                <div class="settings__stat">
+                    <span class="settings__stat-label">Total Shorts skipped:</span>
+                    <span class="settings__stat-value" id="skipCountDisplay">0</span>
+                </div>
+
+                <button type="button" id="resetCountBtn" class="settings__button settings__button--secondary">
+                    Reset Counter
+                </button>
+
+                <p class="settings__help-text">
+                    This counts only automatic skips, not manual navigation.
+                </p>
+            </section>
+
             <!-- Reset Section -->
             <section class="settings__section settings__section--danger">
                 <h2 class="settings__section-title">Reset Settings</h2>
@@ -97,19 +118,17 @@
         </main>
 
         <footer class="settings__footer">
-            <p class="settings__credit">LazyShorts by <strong>Mellow Solutions</strong></p>
-            <p class="settings__version">Version 1.0.1</p>
-            <div class="settings__links">
-                <a href="https://buymeacoffee.com/mellowsolutions" target="_blank" rel="noopener noreferrer"
-                    class="settings__link">
-                    Support Development ☕
-                </a>
-                <span class="settings__separator">•</span>
-                <a href="https://mello2110.github.io/LandingpageMellowSolutions/" target="_blank"
-                    rel="noopener noreferrer" class="settings__link">
-                    Mellow Solutions
-                </a>
-            </div>
+            <p class="settings__credit">LazyShorts by <a href="https://mello2110.github.io/LandingpageMellowSolutions/"
+                    target="_blank" rel="noopener noreferrer" class="settings__credit-link">Mellow Solutions</a></p>
+            <p class="settings__version">Version 1.1.0</p>
+            <a href="https://buymeacoffee.com/mellowsolutions" target="_blank" rel="noopener noreferrer"
+                class="settings__coffee-btn" aria-label="Support Development">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M20 8h-2V6c0-1.1-.9-2-2-2H6c-1.1 0-2 .9-2 2v9c0 2.76 2.24 5 5 5h4c2.76 0 5-2.24 5-5v-1h2c1.1 0 2-.9 2-2s-.9-2-2-2zm-4 7c0 1.65-1.35 3-3 3H9c-1.65 0-3-1.35-3-3V6h10v9zm2-4h-2v-2h2v2z" />
+                    <path d="M6 20h12v2H6z" />
+                </svg>
+            </a>
         </footer>
     </div>
 

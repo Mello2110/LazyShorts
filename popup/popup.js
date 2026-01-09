@@ -7,6 +7,7 @@
 const enableToggle = document.getElementById('enableToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const coffeeBtn = document.getElementById('coffeeBtn');
+const skipCountDisplay = document.getElementById('skipCountDisplay');
 
 /**
  * Initialize popup
@@ -16,6 +17,9 @@ async function init() {
 
     // Load current settings
     await loadSettings();
+
+    // Load skip count
+    await loadSkipCount();
 
     // Setup event listeners
     setupEventListeners();
@@ -43,6 +47,29 @@ async function loadSettings() {
         console.log('[LazyShorts Popup] Settings loaded:', settings);
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to load settings:', error);
+    }
+}
+
+/**
+ * Load skip count from storage and update display
+ */
+async function loadSkipCount() {
+    try {
+        const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
+        updateSkipCountDisplay(skipCount);
+        console.log('[LazyShorts Popup] Skip count loaded:', skipCount);
+    } catch (error) {
+        console.error('[LazyShorts Popup] Failed to load skip count:', error);
+    }
+}
+
+/**
+ * Update the skip count display with formatted number
+ * @param {number} count 
+ */
+function updateSkipCountDisplay(count) {
+    if (skipCountDisplay) {
+        skipCountDisplay.textContent = new Intl.NumberFormat().format(count);
     }
 }
 
@@ -122,6 +149,11 @@ function handleStorageChange(changes, areaName) {
     // Update theme if darkMode changed
     if (changes.darkMode) {
         applyTheme(changes.darkMode.newValue);
+    }
+
+    // Update skip count display if changed
+    if (changes.skipCount) {
+        updateSkipCountDisplay(changes.skipCount.newValue);
     }
 }
 
