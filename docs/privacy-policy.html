@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LazyShorts - Privacy Policy</title>
+    <style>
+        :root {
+            --color-bg: #0f0f0f;
+            --color-bg-secondary: #1f1f1f;
+            --color-text: #f1f1f1;
+            --color-text-secondary: #aaaaaa;
+            --color-primary: #ff0000;
+            --color-border: #3f3f3f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            border-radius: 16px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 1rem;
+        }
+
+        .last-updated {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            margin-top: 16px;
+        }
+
+        section {
+            background-color: var(--color-bg-secondary);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--color-primary);
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--color-text-secondary);
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        ul {
+            margin: 16px 0;
+            padding-left: 24px;
+            color: var(--color-text-secondary);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--color-text);
+        }
+
+        a {
+            color: var(--color-primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid var(--color-border);
+            margin-top: 48px;
+        }
+
+        footer p {
+            font-size: 0.875rem;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --color-bg: #ffffff;
+                --color-bg-secondary: #f9f9f9;
+                --color-text: #0f0f0f;
+                --color-text-secondary: #606060;
+                --color-border: #e0e0e0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <img src="../assets/logo-small.png" alt="LazyShorts Logo" class="logo">
+            <h1>LazyShorts</h1>
+            <p class="subtitle">Privacy Policy</p>
+            <p class="last-updated">Last updated: January 9, 2026</p>
+        </header>
+
+        <main>
+            <section>
+                <h2>Overview</h2>
+                <p>
+                    LazyShorts is a browser extension that automatically advances to the next YouTube Short
+                    when the current one finishes playing. We are committed to protecting your privacy and
+                    being transparent about our data practices.
+                </p>
+                <p>
+                    <strong>In short: LazyShorts does not collect, store, or transmit any personal data.</strong>
+                </p>
+            </section>
+
+            <section>
+                <h2>Data Collection</h2>
+                <p>LazyShorts does <strong>NOT</strong> collect:</p>
+                <ul>
+                    <li>Personal information (name, email, etc.)</li>
+                    <li>Browsing history or activity</li>
+                    <li>YouTube viewing habits</li>
+                    <li>IP addresses or location data</li>
+                    <li>Any analytics or usage statistics</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>Data Storage</h2>
+                <p>LazyShorts stores only your preferences locally on your device using Chrome's built-in storage API:
+                </p>
+                <ul>
+                    <li><strong>Enabled/Disabled state</strong> - Whether auto-skip is turned on</li>
+                    <li><strong>Delay setting</strong> - Seconds to wait before skipping (0-5)</li>
+                    <li><strong>Theme preference</strong> - Light, dark, or auto mode</li>
+                    <li><strong>Skip counter</strong> - Number of Shorts automatically skipped</li>
+                </ul>
+                <p>
+                    This data is stored using <code>chrome.storage.sync</code>, which may sync across
+                    your devices if you're signed into Chrome. This data never leaves your browser and
+                    is never transmitted to any external servers.
+                </p>
+            </section>
+
+            <section>
+                <h2>Network Requests</h2>
+                <p>
+                    LazyShorts makes <strong>zero network requests</strong>. The extension works entirely
+                    offline after installation. We do not communicate with any servers, APIs, or third-party services.
+                </p>
+            </section>
+
+            <section>
+                <h2>Permissions Explained</h2>
+                <p>LazyShorts requests minimal permissions:</p>
+                <ul>
+                    <li><strong>storage</strong> - To save your preferences locally</li>
+                    <li><strong>activeTab</strong> - To interact with the current YouTube Shorts page</li>
+                    <li><strong>Host permission (youtube.com)</strong> - To run on YouTube Shorts pages only</li>
+                </ul>
+                <p>
+                    We follow the principle of least privilege and only request permissions that are
+                    absolutely necessary for the extension to function.
+                </p>
+            </section>
+
+            <section>
+                <h2>Third-Party Services</h2>
+                <p>
+                    LazyShorts does not use any third-party services, analytics tools, or advertising networks.
+                    There are no embedded trackers or external scripts.
+                </p>
+            </section>
+
+            <section>
+                <h2>Children's Privacy</h2>
+                <p>
+                    LazyShorts does not knowingly collect any information from children under 13.
+                    Since we don't collect any personal data from anyone, this applies to all users.
+                </p>
+            </section>
+
+            <section>
+                <h2>Changes to This Policy</h2>
+                <p>
+                    We may update this Privacy Policy occasionally. Any changes will be posted on this page
+                    with an updated revision date. We encourage you to review this policy periodically.
+                </p>
+            </section>
+
+            <section>
+                <h2>Contact Us</h2>
+                <p>
+                    If you have any questions about this Privacy Policy, please contact us at:
+                </p>
+                <p>
+                    <strong>Mellow Solutions</strong><br>
+                    Website: <a href="https://mello2110.github.io/LandingpageMellowSolutions/" target="_blank"
+                        rel="noopener noreferrer">mello2110.github.io/LandingpageMellowSolutions</a>
+                </p>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2026 Mellow Solutions. All rights reserved.</p>
+            <p><a href="https://mello2110.github.io/LandingpageMellowSolutions/">Back to Mellow Solutions</a></p>
+        </footer>
+    </div>
+</body>
+
+</html>
