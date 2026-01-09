@@ -178,6 +178,7 @@
     background: var(--color-bg-tertiary);
     outline: none;
     -webkit-appearance: none;
+    appearance: none;
 }
 
 .settings__range::-webkit-slider-thumb {
@@ -357,6 +358,11 @@
 .settings__link:focus-visible {
     outline: var(--border-width-medium) solid var(--color-border-focus);
     outline-offset: 2px;
+}
+
+.settings__separator {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-sm);
 }
 
 /* ================================

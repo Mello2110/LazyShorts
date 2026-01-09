@@ -5,6 +5,27 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-09
+
+### Fixed
+- **CRITICAL**: Fixed auto-skip not working on subsequent Shorts after first skip
+- **CRITICAL**: Added missing URL patterns for non-www and mobile YouTube URLs (`youtube.com/shorts/*`, `m.youtube.com/shorts/*`)
+- **CRITICAL**: Implemented missing `tryKeyboardNavigation()` fallback function
+- Fixed SPA navigation timing issues with 500ms debounce on URL observer
+- Disabled video loop attribute to prevent auto-replay
+
+### Changed
+- Updated extension icon to new logo design
+- Improved video element detection with better retry logic (50 attempts over 5 seconds)
+- Enhanced event listener management with proper cleanup before re-attachment
+- Added extensive console logging for better debugging
+
+### Technical Details
+- Content script now properly handles YouTube's Single Page Application navigation
+- Event listeners are cleared before re-initialization to prevent double-firing
+- Button selector now includes German aria-labels ("Nächste")
+- Keyboard navigation (Arrow Down) automatically triggers if button click fails
+
 ## [1.0.0] - 2026-01-09
 
 ### Added
@@ -30,15 +51,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
-### Planned Features
-- Custom keyboard shortcuts for manual skip
-- Per-channel whitelist/blacklist
-- Skip intro animations option
-- Local-only usage statistics
-- Opera-specific optimizations
-
----
-
-**Full Changelog**: https://github.com/yourusername/LazyShorts/releases
+**Full Changelog**: https://github.com/mellowsolutions/LazyShorts/releases

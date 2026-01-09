@@ -99,7 +99,7 @@ The extension respects your settings in real-time—no page reload needed!
 
 All data is stored using Chrome's `chrome.storage.sync` API, which may sync across your devices if you're signed into Chrome.
 
-**Full Privacy Policy**: [https://example.com/privacy](#) *(Replace with your actual privacy policy URL)*
+**Full Privacy Policy**: [https://mello2110.github.io/LandingpageMellowSolutions/](#) *(Coming soon)*
 
 ---
 
@@ -145,9 +145,9 @@ We follow the **principle of least privilege**—only requesting what's absolute
 
 If you encounter issues or have feature requests:
 
-1. **Report a Bug**: Open an issue on [GitHub](#) *(add your repo link)*
-2. **Email**: support@example.com *(replace with your email)*
-3. **Buy Me a Coffee**: Support development ☕ [buymeacoffee.com/[YOUR_USERNAME]](#)
+1. **Report a Bug**: Open an issue on [GitHub](#) *(repository link coming soon)*
+2. **Website**: [Mellow Solutions](https://mello2110.github.io/LandingpageMellowSolutions/)
+3. **Buy Me a Coffee**: Support development ☕ [buymeacoffee.com/mellowsolutions](https://buymeacoffee.com/mellowsolutions)
 
 ---
 
@@ -221,7 +221,7 @@ This project is licensed under the **MIT License**. See [LICENSE](#) for details
 
 ## 🙏 Credits
 
-**Developed by**: [Mellow Solutions](#)
+**Developed by**: [Mellow Solutions](https://mello2110.github.io/LandingpageMellowSolutions/)
 
 **Inspired by**: The need for a seamless YouTube Shorts browsing experience
 

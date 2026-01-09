@@ -8,6 +8,7 @@ const SELECTORS = {
     nextButton: [
         'button[aria-label*="Next"]',
         'button[aria-label*="next"]',
+        'button[aria-label*="Nächste"]',
         '.ytd-shorts-player-controls button:last-child',
         '#navigation-button-down',
         'ytd-shorts #navigation-button-down',
@@ -17,7 +18,8 @@ const SELECTORS = {
         'video.html5-main-video',
         'ytd-shorts video',
         '.shorts-video-container video',
-        'video.video-stream'
+        'video.video-stream',
+        'video'
     ]
 };
 
@@ -94,23 +96,53 @@ async function setupAutoSkip() {
         return;
     }
 
-    // Find video element
-    videoElement = findElement(SELECTORS.videoPlayer);
+    // Find video element with improved retry logic
+    waitForVideoElement((video) => {
+        videoElement = video;
 
-    if (!videoElement) {
-        console.warn('[LazyShorts] Video player not found, will retry...');
-        // Retry after delay (video might not be loaded yet)
-        setTimeout(() => setupAutoSkip(), 1000);
-        return;
+        // CRITICAL: Disable loop to prevent auto-replay
+        try {
+            if (videoElement.hasAttribute('loop')) {
+                videoElement.removeAttribute('loop');
+            }
+            videoElement.loop = false;
+            console.log('[LazyShorts] Video loop disabled');
+        } catch (e) {
+            console.warn('[LazyShorts] Could not disable loop:', e);
+        }
+
+        console.log('[LazyShorts] Video player found, attaching listener');
+
+        // Create and attach event listener
+        videoEndedListener = handleVideoEnd;
+        videoElement.addEventListener('ended', videoEndedListener);
+
+        console.log('[LazyShorts] Auto-skip enabled');
+    });
+}
+
+/**
+ * Wait for video element with retry logic
+ * @param {Function} callback - Called when video is found
+ * @param {number} attempts - Current attempt number
+ * @param {number} maxAttempts - Maximum attempts before giving up
+ */
+function waitForVideoElement(callback, attempts = 0, maxAttempts = 50) {
+    const video = findElement(SELECTORS.videoPlayer);
+
+    if (video && video.readyState !== undefined) {
+        // Video found and is an actual video element
+        console.log(`[LazyShorts] Video found after ${attempts + 1} attempt(s)`);
+        callback(video);
+    } else if (attempts < maxAttempts) {
+        // Retry after 100ms
+        setTimeout(() => {
+            waitForVideoElement(callback, attempts + 1, maxAttempts);
+        }, 100);
+    } else {
+        console.error('[LazyShorts] Video element not found after', maxAttempts, 'attempts (5 seconds)');
+        console.error('[LazyShorts] Please report this issue with your browser and YouTube version');
     }
-
-    console.log('[LazyShorts] Video player found, attaching listener');
-
-    // Create and attach event listener
-    videoEndedListener = handleVideoEnd;
-    videoElement.addEventListener('ended', videoEndedListener);
-
-    console.log('[LazyShorts] Auto-skip enabled');
 }
 
 /**
@@ -123,8 +155,13 @@ function handleVideoEnd() {
     const nextButton = findElement(SELECTORS.nextButton);
 
     if (!nextButton) {
-        console.warn('[LazyShorts] Next button not found - YouTube DOM may have changed');
-        console.warn('[LazyShorts] Please report this issue to the developer');
+        console.warn('[LazyShorts] Next button not found - trying keyboard navigation');
+
+        // Apply delay if configured, then try keyboard
+        const delay = settings.delaySeconds * 1000;
+        setTimeout(() => {
+            tryKeyboardNavigation();
+        }, delay);
         return;
     }
 
@@ -149,10 +186,55 @@ function handleVideoEnd() {
  */
 function clickNextButton(button) {
     try {
+        // Disable video loop before clicking
+        if (videoElement) {
+            videoElement.loop = false;
+        }
+
         button.click();
         console.log('[LazyShorts] Clicked "Next" button');
+
+        // Verify navigation occurred after short delay
+        setTimeout(() => {
+            console.log('[LazyShorts] Current URL after click:', window.location.href);
+        }, 500);
     } catch (error) {
         console.error('[LazyShorts] Failed to click "Next" button:', error);
+        console.log('[LazyShorts] Attempting keyboard navigation fallback...');
+        tryKeyboardNavigation();
+    }
+}
+
+/**
+ * Attempt to navigate using keyboard event (fallback method)
+ */
+function tryKeyboardNavigation() {
+    try {
+        // Disable video loop first
+        if (videoElement) {
+            videoElement.loop = false;
+        }
+
+        // Dispatch Arrow Down keydown event
+        const keyEvent = new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            code: 'ArrowDown',
+            keyCode: 40,
+            which: 40,
+            bubbles: true,
+            cancelable: true,
+            view: window
+        });
+
+        document.dispatchEvent(keyEvent);
+        console.log('[LazyShorts] Arrow Down key event dispatched');
+
+        // Verify navigation
+        setTimeout(() => {
+            console.log('[LazyShorts] URL after keyboard event:', window.location.href);
+        }, 500);
+    } catch (error) {
+        console.error('[LazyShorts] Keyboard navigation also failed:', error);
     }
 }
 
@@ -213,6 +295,7 @@ function handleSettingsChange(changes, areaName) {
  */
 function observeUrlChanges() {
     let lastUrl = window.location.href;
+    let urlChangeTimeout = null;
 
     const observer = new MutationObserver(() => {
         const currentUrl = window.location.href;
@@ -221,14 +304,21 @@ function observeUrlChanges() {
             console.log('[LazyShorts] URL changed:', currentUrl);
             lastUrl = currentUrl;
 
-            // Re-initialize if on Shorts page
-            if (isYouTubeShorts()) {
-                console.log('[LazyShorts] Navigated to Shorts, re-initializing...');
-                setupAutoSkip();
-            } else {
-                console.log('[LazyShorts] Left Shorts page, cleaning up...');
-                removeVideoListener();
+            // Clear any pending re-initialization
+            if (urlChangeTimeout) {
+                clearTimeout(urlChangeTimeout);
             }
+
+            // Debounce re-initialization to avoid multiple rapid calls
+            urlChangeTimeout = setTimeout(() => {
+                if (isYouTubeShorts()) {
+                    console.log('[LazyShorts] Navigated to Shorts, re-initializing...');
+                    setupAutoSkip();
+                } else {
+                    console.log('[LazyShorts] Left Shorts page, cleaning up...');
+                    removeVideoListener();
+                }
+            }, 500); // Wait 500ms before re-initializing
         }
     });
 

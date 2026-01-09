@@ -102,7 +102,7 @@ function openSettings() {
  */
 function openCoffeePage() {
     chrome.tabs.create({
-        url: 'https://buymeacoffee.com/[YOUR_USERNAME]' // TODO: Replace with actual username
+        url: 'https://buymeacoffee.com/mellowsolutions'
     });
 }
 
