@@ -55,7 +55,9 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 |------|----------|---------|
 | Extension ZIP | `LazyShorts_v1.2.0.zip` | Main upload file |
 | Promo Tile | `store_assets/promo_tile_440x280.png` | Small promo tile |
-| Screenshot 1 | `store_assets/screenshot_1.png` | Store screenshot |
+| Screenshot 1 | `store_assets/screenshot_1_popup.png` | Main popup view |
+| Screenshot 2 | `store_assets/screenshot_2_settings.png` | Settings page view |
+| Screenshot 3 | `store_assets/screenshot_3_stats.png` | Statistics view |
 | Icon 128px | `icons/icon128.png` | Store icon |
 
 ---
