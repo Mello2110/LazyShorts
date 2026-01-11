@@ -47,6 +47,8 @@ const SELECTORS = {
 let settings = {};
 let videoElement = null;
 let videoEndedListener = null;
+let loopPreventionListener = null; // Listener to continuously prevent loop
+let videoAttributeObserver = null; // MutationObserver to watch for loop attribute changes
 let isInitialized = false;
 let skipAlreadyTriggered = false; // Prevent double-skip (dislike + video end)
 let dislikeListenerAttached = false; // Track if dislike listener is attached
@@ -158,15 +160,11 @@ async function setupAutoSkip() {
         videoElement = video;
 
         // CRITICAL: Disable loop to prevent auto-replay
-        try {
-            if (videoElement.hasAttribute('loop')) {
-                videoElement.removeAttribute('loop');
-            }
-            videoElement.loop = false;
-            console.log('[LazyShorts] Video loop disabled');
-        } catch (e) {
-            console.warn('[LazyShorts] Could not disable loop:', e);
-        }
+        disableVideoLoop();
+
+        // CRITICAL: Set up CONTINUOUS loop prevention
+        // YouTube may re-enable loop dynamically (e.g., after seeking/fast-forward)
+        setupContinuousLoopPrevention();
 
         console.log('[LazyShorts] Video player found, attaching listener');
 
@@ -509,9 +507,93 @@ function findElement(selectorArray) {
 }
 
 /**
+ * Disable video loop attribute
+ */
+function disableVideoLoop() {
+    if (!videoElement) return;
+
+    try {
+        if (videoElement.hasAttribute('loop')) {
+            videoElement.removeAttribute('loop');
+        }
+        if (videoElement.loop === true) {
+            videoElement.loop = false;
+        }
+    } catch (e) {
+        console.warn('[LazyShorts] Could not disable loop:', e);
+    }
+}
+
+/**
+ * Setup continuous loop prevention
+ * Uses both timeupdate event and MutationObserver to ensure loop stays disabled
+ */
+function setupContinuousLoopPrevention() {
+    if (!videoElement) return;
+
+    // Remove existing listeners if any
+    removeContinuousLoopPrevention();
+
+    // Method 1: Check on every timeupdate (covers seeking/fast-forward)
+    loopPreventionListener = () => {
+        if (videoElement && videoElement.loop === true) {
+            console.log('[LazyShorts] Loop was re-enabled, disabling again');
+            videoElement.loop = false;
+            videoElement.removeAttribute('loop');
+        }
+    };
+    videoElement.addEventListener('timeupdate', loopPreventionListener);
+
+    // Also check on seeking events
+    videoElement.addEventListener('seeking', loopPreventionListener);
+    videoElement.addEventListener('seeked', loopPreventionListener);
+
+    // Method 2: MutationObserver to catch attribute changes
+    try {
+        videoAttributeObserver = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'loop') {
+                    console.log('[LazyShorts] Loop attribute changed, removing it');
+                    videoElement.removeAttribute('loop');
+                    videoElement.loop = false;
+                }
+            }
+        });
+
+        videoAttributeObserver.observe(videoElement, {
+            attributes: true,
+            attributeFilter: ['loop']
+        });
+
+        console.log('[LazyShorts] Continuous loop prevention enabled (timeupdate + MutationObserver)');
+    } catch (e) {
+        console.warn('[LazyShorts] MutationObserver for loop failed:', e);
+    }
+}
+
+/**
+ * Remove continuous loop prevention listeners
+ */
+function removeContinuousLoopPrevention() {
+    if (videoElement && loopPreventionListener) {
+        videoElement.removeEventListener('timeupdate', loopPreventionListener);
+        videoElement.removeEventListener('seeking', loopPreventionListener);
+        videoElement.removeEventListener('seeked', loopPreventionListener);
+    }
+    if (videoAttributeObserver) {
+        videoAttributeObserver.disconnect();
+        videoAttributeObserver = null;
+    }
+    loopPreventionListener = null;
+}
+
+/**
  * Remove video event listener
  */
 function removeVideoListener() {
+    // Remove loop prevention
+    removeContinuousLoopPrevention();
+
     if (videoElement && videoEndedListener) {
         videoElement.removeEventListener('ended', videoEndedListener);
         console.log('[LazyShorts] Video listener removed');
