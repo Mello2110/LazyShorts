@@ -9,12 +9,24 @@
 
 .settings {
     min-height: 100vh;
-    background-color: var(--color-bg-primary);
+    background: linear-gradient(135deg,
+            #1a0a0d 0%,
+            /* Dark burgundy-black */
+            #1c1215 20%,
+            /* Subtle reddish dark */
+            #171a1c 40%,
+            /* Dark charcoal */
+            #141819 70%,
+            /* Deep charcoal-teal */
+            #121516 100%
+            /* Very dark teal-black */
+        );
     color: var(--color-text-primary);
     font-family: var(--font-family-base);
     margin: 0;
     padding: 0;
 }
+
 
 .settings__container {
     max-width: 720px;
@@ -74,10 +86,12 @@
    ================================ */
 
 .settings__section {
-    background-color: var(--color-bg-secondary);
+    background-color: rgba(0, 0, 0, 0.3);
     border-radius: var(--border-radius-md);
     padding: var(--space-md);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
 }
 
 .settings__section--danger {
@@ -425,7 +439,7 @@
 .settings__footer {
     margin-top: var(--space-xl);
     padding-top: var(--space-lg);
-    border-top: 1px solid var(--color-border-primary);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     text-align: center;
 }
 
