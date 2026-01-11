@@ -4,13 +4,14 @@
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-blue?logo=google-chrome)](https://chrome.google.com/webstore)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
-[![Version](https://img.shields.io/badge/version-1.1.0-orange)](#)
+[![Version](https://img.shields.io/badge/version-1.2.0-orange)](#)
 
 ---
 
 ## ✨ Features
 
 - 🚀 **Automatic Skipping**: Seamlessly advance to the next YouTube Short after the current one ends
+- 👎 **Skip on Dislike**: Automatically skip to the next Short when you click the dislike button
 - ⏱️ **Configurable Delay**: Set a delay (0-5 seconds) before skipping
 - 📊 **Skip Counter**: Track how many Shorts have been automatically skipped
 - 🎨 **Clean UI**: Minimalist design inspired by YouTube's aesthetic
@@ -67,6 +68,7 @@ Access the settings page by clicking the settings icon in the popup, or right-cl
 **Available Settings**:
 
 - **Enable Auto-Skip**: Turn the extension on or off
+- **Skip on Dislike**: Skip to next Short when you dislike a video
 - **Delay**: Set how many seconds to wait before skipping (0-5 seconds)
 - **Theme**: Choose Light, Dark, or Auto (follows system preference)
 - **Statistics**: View your total skip count and reset it if desired
@@ -232,6 +234,12 @@ This project is licensed under the **MIT License**. See [LICENSE](#) for details
 ---
 
 ## 📊 Version History
+
+### v1.2.0 (January 2026)
+- 👎 **Skip on Dislike**: Automatically skip to next Short when you dislike a video
+- New toggle in popup and settings page
+- Only triggers on initial dislike (not when un-disliking)
+- Works alongside existing auto-skip feature
 
 ### v1.1.0 (January 2026)
 - 📊 **Skip Counter**: Track total Shorts automatically skipped

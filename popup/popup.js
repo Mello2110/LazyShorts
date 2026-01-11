@@ -5,6 +5,7 @@
 
 // DOM elements
 const enableToggle = document.getElementById('enableToggle');
+const skipOnDislikeToggle = document.getElementById('skipOnDislikeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const coffeeBtn = document.getElementById('coffeeBtn');
 const skipCountDisplay = document.getElementById('skipCountDisplay');
@@ -39,11 +40,15 @@ async function loadSettings() {
         const settings = await chrome.storage.sync.get({
             enabled: true,
             delaySeconds: 0,
-            darkMode: 'auto'
+            darkMode: 'auto',
+            skipOnDislike: true
         });
 
-        // Update toggle state
+        // Update toggle states
         enableToggle.checked = settings.enabled;
+        if (skipOnDislikeToggle) {
+            skipOnDislikeToggle.checked = settings.skipOnDislike;
+        }
 
         // Store and apply theme
         currentTheme = settings.darkMode;
@@ -84,6 +89,11 @@ function updateSkipCountDisplay(count) {
 function setupEventListeners() {
     // Toggle auto-skip on/off
     enableToggle.addEventListener('change', handleToggleChange);
+
+    // Toggle skip on dislike on/off
+    if (skipOnDislikeToggle) {
+        skipOnDislikeToggle.addEventListener('change', handleSkipOnDislikeToggle);
+    }
 
     // Toggle dark mode
     if (themeToggleBtn) {
@@ -147,6 +157,24 @@ async function handleToggleChange(event) {
 }
 
 /**
+ * Handle skip on dislike toggle change
+ * @param {Event} event 
+ */
+async function handleSkipOnDislikeToggle(event) {
+    const enabled = event.target.checked;
+
+    try {
+        await chrome.storage.sync.set({ skipOnDislike: enabled });
+        console.log('[LazyShorts Popup] Skip on dislike', enabled ? 'enabled' : 'disabled');
+        showFeedback(enabled ? 'Skip on dislike enabled' : 'Skip on dislike disabled');
+    } catch (error) {
+        console.error('[LazyShorts Popup] Failed to update skip on dislike:', error);
+        event.target.checked = !enabled;
+        showFeedback('Failed to update setting', 'error');
+    }
+}
+
+/**
  * Open settings page in new tab
  */
 function openSettings() {
@@ -189,6 +217,11 @@ function handleStorageChange(changes, areaName) {
     // Update skip count display if changed
     if (changes.skipCount) {
         updateSkipCountDisplay(changes.skipCount.newValue);
+    }
+
+    // Update skip on dislike toggle if changed
+    if (changes.skipOnDislike && skipOnDislikeToggle) {
+        skipOnDislikeToggle.checked = changes.skipOnDislike.newValue;
     }
 }
 

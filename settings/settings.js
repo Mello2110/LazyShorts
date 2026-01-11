@@ -5,6 +5,7 @@
 
 // DOM elements
 const enableToggle = document.getElementById('enableToggle');
+const skipOnDislikeToggle = document.getElementById('skipOnDislikeToggle');
 const delayRange = document.getElementById('delayRange');
 const delayValue = document.getElementById('delayValue');
 const themeLight = document.getElementById('themeLight');
@@ -18,7 +19,8 @@ const resetCountBtn = document.getElementById('resetCountBtn');
 const DEFAULT_SETTINGS = {
     enabled: true,
     delaySeconds: 0,
-    darkMode: 'auto'
+    darkMode: 'auto',
+    skipOnDislike: true
 };
 
 /**
@@ -49,6 +51,11 @@ async function loadSettings() {
         // Update toggle
         enableToggle.checked = settings.enabled;
 
+        // Update skip on dislike toggle
+        if (skipOnDislikeToggle) {
+            skipOnDislikeToggle.checked = settings.skipOnDislike;
+        }
+
         // Update delay slider
         delayRange.value = settings.delaySeconds;
         delayValue.textContent = settings.delaySeconds;
@@ -71,6 +78,11 @@ async function loadSettings() {
 function setupEventListeners() {
     // Toggle auto-skip
     enableToggle.addEventListener('change', handleToggleChange);
+
+    // Toggle skip on dislike
+    if (skipOnDislikeToggle) {
+        skipOnDislikeToggle.addEventListener('change', handleSkipOnDislikeToggle);
+    }
 
     // Delay slider
     delayRange.addEventListener('input', handleDelayInput);
@@ -189,6 +201,22 @@ async function handleToggleChange(event) {
 }
 
 /**
+ * Handle skip on dislike toggle change
+ * @param {Event} event 
+ */
+async function handleSkipOnDislikeToggle(event) {
+    const enabled = event.target.checked;
+
+    try {
+        await chrome.storage.sync.set({ skipOnDislike: enabled });
+        console.log('[LazyShorts Settings] Skip on dislike', enabled ? 'enabled' : 'disabled');
+    } catch (error) {
+        console.error('[LazyShorts Settings] Failed to update skip on dislike:', error);
+        event.target.checked = !enabled;
+    }
+}
+
+/**
  * Handle delay slider input (live update)
  * @param {Event} event 
  */
@@ -301,6 +329,11 @@ function handleStorageChange(changes, areaName) {
     // Update skip count display if changed
     if (changes.skipCount) {
         updateSkipCountDisplay(changes.skipCount.newValue);
+    }
+
+    // Update skip on dislike toggle if changed
+    if (changes.skipOnDislike && skipOnDislikeToggle) {
+        skipOnDislikeToggle.checked = changes.skipOnDislike.newValue;
     }
 }
 

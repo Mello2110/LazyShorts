@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
     enabled: true,
     delaySeconds: 0,
     darkMode: 'auto', // 'light' | 'dark' | 'auto'
-    skipCount: 0 // Counter for auto-skipped Shorts
+    skipCount: 0, // Counter for auto-skipped Shorts
+    skipOnDislike: true // Skip to next Short when dislike button is clicked
 };
 
 /**
@@ -136,6 +137,12 @@ function validateSetting(key, value) {
             }
             break;
 
+        case 'skipOnDislike':
+            if (typeof value !== 'boolean') {
+                throw new Error('Setting "skipOnDislike" must be a boolean');
+            }
+            break;
+
         default:
             throw new Error(`Unknown setting key: "${key}"`);
     }
@@ -187,6 +194,21 @@ export async function resetSkipCount() {
     } catch (error) {
         console.error('[LazyShorts] Failed to reset skip count:', error);
         return false;
+    }
+}
+
+/**
+ * Get the skip on dislike setting
+ * 
+ * @returns {Promise<boolean>} Whether skip on dislike is enabled
+ */
+export async function getSkipOnDislikeSetting() {
+    try {
+        const { skipOnDislike = true } = await chrome.storage.sync.get('skipOnDislike');
+        return skipOnDislike;
+    } catch (error) {
+        console.error('[LazyShorts] Failed to get skipOnDislike setting:', error);
+        return true; // Default to enabled on error
     }
 }
 

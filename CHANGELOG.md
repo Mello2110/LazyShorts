@@ -5,6 +5,21 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-11
+
+### Added
+- 👎 **Skip on Dislike**: Automatically skip to next Short when you click the dislike button
+- New setting toggle in popup and settings page (enabled by default)
+- Only triggers on initial dislike action, not when removing a dislike (un-disliking)
+- Works independently of the main auto-skip feature
+
+### Technical Details
+- Added `skipOnDislike` to storage schema (default: true)
+- Implemented like/dislike button detection with multiple fallback selectors
+- Added `skipAlreadyTriggered` flag to prevent double-skipping (dislike + video end)
+- Added `skipToNextShort(source)` function for unified skip handling with source tracking
+- Buttons are re-detected on SPA navigation for new Shorts
+
 ## [1.1.0] - 2026-01-09
 
 ### Added
