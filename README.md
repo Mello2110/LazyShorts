@@ -55,7 +55,10 @@
 
 ### Popup Controls
 
-![Popup UI](docs/images/popup-screenshot.png)
+- **Toggle Switch**: Enable or disable auto-skip functionality
+- **Skip on Dislike Toggle**: Auto-skip when you dislike a video
+- **Settings Button**: Open the full settings page
+- **Support Button**: Buy the developer a coffee ☕
 
 - **Toggle Switch**: Enable or disable auto-skip functionality
 - **Settings Button**: Open the full settings page
@@ -103,7 +106,7 @@ The extension respects your settings in real-time—no page reload needed!
 
 All data is stored using Chrome's `chrome.storage.sync` API, which may sync across your devices if you're signed into Chrome.
 
-**Full Privacy Policy**: [https://mello2110.github.io/LandingpageMellowSolutions/](#) *(Coming soon)*
+**Full Privacy Policy**: [https://mello2110.github.io/lazyshorts-privacy-policy/](https://mello2110.github.io/lazyshorts-privacy-policy/)
 
 ---
 
@@ -149,7 +152,7 @@ We follow the **principle of least privilege**—only requesting what's absolute
 
 If you encounter issues or have feature requests:
 
-1. **Report a Bug**: Open an issue on [GitHub](#) *(repository link coming soon)*
+1. **Report a Bug**: Open an issue on [GitHub](https://github.com/Mello2110/LazyShorts/issues)
 2. **Website**: [Mellow Solutions](https://mello2110.github.io/LandingpageMellowSolutions/)
 3. **Buy Me a Coffee**: Support development ☕ [buymeacoffee.com/mellowsolutions](https://buymeacoffee.com/mellowsolutions)
 
@@ -193,7 +196,7 @@ LazyShorts/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/LazyShorts.git
+   git clone https://github.com/Mello2110/LazyShorts.git
    cd LazyShorts
    ```
 
