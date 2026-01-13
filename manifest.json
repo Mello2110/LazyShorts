@@ -5,8 +5,7 @@
   "description": "Automatically advance to the next YouTube Short when the current one finishes playing",
   "author": "Mellow Solutions",
   "permissions": [
-    "storage",
-    "activeTab"
+    "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"
