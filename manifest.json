@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LazyShorts",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Automatically advance to the next YouTube Short when the current one finishes playing",
   "author": "Mellow Solutions",
   "permissions": [
