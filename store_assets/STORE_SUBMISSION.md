@@ -3,17 +3,17 @@
 ## Store Listing Details
 
 ### Name
-LazyShorts
+LazyShorts - Auto-Skip YouTube Shorts and TikTok
 
 ### Short Description (132 chars max)
-Automatically skip to the next YouTube Short when the current one ends or when you dislike a video. Skip counter included.
+Automatically skip to the next YouTube Short or TikTok video when the current one ends or when you dislike a video.
 
 ### Detailed Description
-LazyShorts enhances your YouTube Shorts viewing experience by automatically advancing to the next Short when the current one finishes playing.
+LazyShorts enhances your YouTube Shorts and TikTok viewing experience by automatically advancing to the next Short when the current one finishes playing.
 
 ✨ FEATURES:
 
-🚀 Auto-Skip: Seamlessly advance to the next YouTube Short when the current one ends
+🚀 Auto-Skip: Seamlessly advance to the next YouTube Short or TikTok video when the current one ends
 👎 Skip on Dislike: Instantly skip to the next Short when you click dislike
 ⏱️ Configurable Delay: Set a delay (0-5 seconds) before skipping
 📊 Skip Counter: Track how many Shorts have been automatically skipped
