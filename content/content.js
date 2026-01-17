@@ -1,10 +1,21 @@
 /**
  * LazyShorts Content Script
- * Automatically advances to the next YouTube Short when current one finishes
+ * Automatically advances to the next YouTube Short or TikTok video when current one finishes
+ * Supports both YouTube Shorts and TikTok
  */
 
-// Selector arrays with fallbacks for YouTube DOM changes
-const SELECTORS = {
+// ============================================
+// PLATFORM CONFIGURATION
+// ============================================
+
+const PLATFORM = {
+    YOUTUBE: 'youtube',
+    TIKTOK: 'tiktok',
+    UNKNOWN: 'unknown'
+};
+
+// YouTube-specific selectors with fallbacks
+const YOUTUBE_SELECTORS = {
     nextButton: [
         'button[aria-label*="Next"]',
         'button[aria-label*="next"]',
@@ -21,7 +32,6 @@ const SELECTORS = {
         'video.video-stream',
         'video'
     ],
-    // NEW: Updated selectors for YouTube's new Web Component architecture
     likeButton: [
         'ytd-reel-video-renderer[is-active] like-button-view-model button',
         'like-button-view-model button',
@@ -42,16 +52,115 @@ const SELECTORS = {
     ]
 };
 
+// TikTok-specific selectors with multiple fallbacks (TikTok changes DOM frequently)
+const TIKTOK_SELECTORS = {
+    videoPlayer: [
+        'div[data-e2e="browse-video"] video',
+        'div[class*="DivVideoContainer"] video',
+        'video[class*="video-player"]',
+        'div[class*="VideoPlayer"] video',
+        'div[class*="DivBrowserModeContainer"] video',
+        'div[class*="DivVideoPlayerContainer"] video',
+        'div[id*="xgwrapper"] video',
+        'video'
+    ],
+    dislikeButton: [
+        // "Not interested" functionality
+        'button[data-e2e="video-not-interested"]',
+        'span[data-e2e="browse-not-interested"]',
+        'button[aria-label*="Not interested"]',
+        'button[aria-label*="Nicht interessiert"]',
+        'button[aria-label*="Kein Interesse"]',
+        '[class*="ButtonNotInterested"]',
+        '[class*="NotInterested"]',
+        '[data-e2e="video-dislike"]',
+        'span[data-e2e="undefined-icon"]' // Sometimes used for dislike
+    ],
+    nextButtonFallback: [
+        'button[data-e2e="arrow-right"]',
+        'button[data-e2e="arrow-down"]',
+        '[class*="StyledArrowDown"]',
+        '[class*="DivArrowRight"]'
+    ]
+};
 
-// State
+// ============================================
+// PLATFORM DETECTION
+// ============================================
+
+/**
+ * Detect current platform
+ * @returns {string} Platform identifier
+ */
+function detectPlatform() {
+    const hostname = window.location.hostname;
+    if (hostname.includes('youtube.com')) return PLATFORM.YOUTUBE;
+    if (hostname.includes('tiktok.com')) return PLATFORM.TIKTOK;
+    return PLATFORM.UNKNOWN;
+}
+
+/**
+ * Get current platform name for logging
+ * @returns {string} Platform name
+ */
+function getPlatformName() {
+    const platform = detectPlatform();
+    return platform.charAt(0).toUpperCase() + platform.slice(1);
+}
+
+/**
+ * Check if current page is a target video page
+ * @returns {boolean}
+ */
+function isTargetPage() {
+    const platform = detectPlatform();
+    switch (platform) {
+        case PLATFORM.YOUTUBE:
+            return window.location.pathname.startsWith('/shorts/');
+        case PLATFORM.TIKTOK:
+            // TikTok videos can appear on various pages (For You, Following, user profiles)
+            // We check for video presence in setupAutoSkip instead
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * Get selectors for current platform
+ * @returns {Object} Platform-specific selectors
+ */
+function getSelectors() {
+    const platform = detectPlatform();
+    switch (platform) {
+        case PLATFORM.YOUTUBE:
+            return YOUTUBE_SELECTORS;
+        case PLATFORM.TIKTOK:
+            return TIKTOK_SELECTORS;
+        default:
+            console.warn('[LazyShorts] Unknown platform, using empty selectors');
+            return {};
+    }
+}
+
+// ============================================
+// STATE MANAGEMENT
+// ============================================
+
 let settings = {};
 let videoElement = null;
 let videoEndedListener = null;
-let loopPreventionListener = null; // Listener to continuously prevent loop
-let videoAttributeObserver = null; // MutationObserver to watch for loop attribute changes
+let loopPreventionListener = null;
+let videoAttributeObserver = null;
 let isInitialized = false;
-let skipAlreadyTriggered = false; // Prevent double-skip (dislike + video end)
-let dislikeListenerAttached = false; // Track if dislike listener is attached
+let skipAlreadyTriggered = false;
+let dislikeListenerAttached = false;
+let currentPlatform = PLATFORM.UNKNOWN;
+let tikTokEventDelegationAttached = false;
+
+// ============================================
+// CORE FUNCTIONALITY
+// ============================================
 
 /**
  * Increment the skip count in storage
@@ -62,10 +171,10 @@ async function incrementSkipCount() {
         const result = await chrome.storage.sync.get({ skipCount: 0 });
         const newCount = result.skipCount + 1;
         await chrome.storage.sync.set({ skipCount: newCount });
-        console.log('[LazyShorts] Skip count incremented to:', newCount);
+        console.log(`[LazyShorts] [${getPlatformName()}] Skip count incremented to:`, newCount);
         return newCount;
     } catch (error) {
-        console.error('[LazyShorts] Failed to increment skip count:', error);
+        console.error(`[LazyShorts] [${getPlatformName()}] Failed to increment skip count:`, error);
         return null;
     }
 }
@@ -88,11 +197,18 @@ async function getSkipOnDislikeSetting() {
  * Initialize the extension
  */
 async function init() {
-    console.log('[LazyShorts] Initializing on:', window.location.href);
+    currentPlatform = detectPlatform();
+    console.log(`[LazyShorts] Initializing on ${getPlatformName()}:`, window.location.href);
 
-    // Check if we're on a YouTube Shorts page
-    if (!isYouTubeShorts()) {
-        console.log('[LazyShorts] Not on YouTube Shorts page, exiting');
+    // Check if we're on a supported platform
+    if (currentPlatform === PLATFORM.UNKNOWN) {
+        console.log('[LazyShorts] Not on a supported platform, exiting');
+        return;
+    }
+
+    // Check if we're on a target page
+    if (!isTargetPage()) {
+        console.log('[LazyShorts] Not on a target page, exiting');
         return;
     }
 
@@ -102,25 +218,17 @@ async function init() {
     // Setup auto-skip if enabled
     await setupAutoSkip();
 
-    // Setup skip on dislike
+    // Setup skip on dislike (platform-specific)
     initializeSkipOnDislike();
 
     // Listen for settings changes
     chrome.storage.onChanged.addListener(handleSettingsChange);
 
-    // Listen for navigation changes (YouTube is an SPA)
+    // Listen for navigation changes (both platforms are SPAs)
     observeUrlChanges();
 
     isInitialized = true;
-    console.log('[LazyShorts] Initialized successfully');
-}
-
-/**
- * Check if current URL is a YouTube Shorts page
- * @returns {boolean}
- */
-function isYouTubeShorts() {
-    return window.location.pathname.startsWith('/shorts/');
+    console.log(`[LazyShorts] [${getPlatformName()}] Initialized successfully`);
 }
 
 /**
@@ -135,10 +243,9 @@ async function loadSettings() {
             skipOnDislike: true
         };
         settings = await chrome.storage.sync.get(defaults);
-        console.log('[LazyShorts] Settings loaded:', settings);
+        console.log(`[LazyShorts] [${getPlatformName()}] Settings loaded:`, settings);
     } catch (error) {
         console.error('[LazyShorts] Failed to load settings:', error);
-        // Use defaults if storage fails
         settings = { enabled: true, delaySeconds: 0, darkMode: 'auto', skipOnDislike: true };
     }
 }
@@ -151,52 +258,52 @@ async function setupAutoSkip() {
     removeVideoListener();
 
     if (!settings.enabled) {
-        console.log('[LazyShorts] Auto-skip disabled');
+        console.log(`[LazyShorts] [${getPlatformName()}] Auto-skip disabled`);
         return;
     }
 
+    const selectors = getSelectors();
+
     // Find video element with improved retry logic
-    waitForVideoElement((video) => {
+    waitForVideoElement(selectors.videoPlayer, (video) => {
         videoElement = video;
 
         // CRITICAL: Disable loop to prevent auto-replay
         disableVideoLoop();
 
         // CRITICAL: Set up CONTINUOUS loop prevention
-        // YouTube may re-enable loop dynamically (e.g., after seeking/fast-forward)
         setupContinuousLoopPrevention();
 
-        console.log('[LazyShorts] Video player found, attaching listener');
+        console.log(`[LazyShorts] [${getPlatformName()}] Video player found, attaching listener`);
 
         // Create and attach event listener
         videoEndedListener = handleVideoEnd;
         videoElement.addEventListener('ended', videoEndedListener);
 
-        console.log('[LazyShorts] Auto-skip enabled');
+        console.log(`[LazyShorts] [${getPlatformName()}] Auto-skip enabled`);
     });
 }
 
 /**
  * Wait for video element with retry logic
+ * @param {string[]} selectorArray - Selectors to try
  * @param {Function} callback - Called when video is found
  * @param {number} attempts - Current attempt number
  * @param {number} maxAttempts - Maximum attempts before giving up
  */
-function waitForVideoElement(callback, attempts = 0, maxAttempts = 50) {
-    const video = findElement(SELECTORS.videoPlayer);
+function waitForVideoElement(selectorArray, callback, attempts = 0, maxAttempts = 50) {
+    const video = findElement(selectorArray);
 
     if (video && video.readyState !== undefined) {
-        // Video found and is an actual video element
-        console.log(`[LazyShorts] Video found after ${attempts + 1} attempt(s)`);
+        console.log(`[LazyShorts] [${getPlatformName()}] Video found after ${attempts + 1} attempt(s)`);
         callback(video);
     } else if (attempts < maxAttempts) {
-        // Retry after 100ms
         setTimeout(() => {
-            waitForVideoElement(callback, attempts + 1, maxAttempts);
+            waitForVideoElement(selectorArray, callback, attempts + 1, maxAttempts);
         }, 100);
     } else {
-        console.error('[LazyShorts] Video element not found after', maxAttempts, 'attempts (5 seconds)');
-        console.error('[LazyShorts] Please report this issue with your browser and YouTube version');
+        console.error(`[LazyShorts] [${getPlatformName()}] Video element not found after ${maxAttempts} attempts (5 seconds)`);
+        console.error('[LazyShorts] Please report this issue with your browser version');
     }
 }
 
@@ -204,82 +311,137 @@ function waitForVideoElement(callback, attempts = 0, maxAttempts = 50) {
  * Handle video ended event
  */
 function handleVideoEnd() {
-    console.log('[LazyShorts] Video ended, preparing to skip...');
+    console.log(`[LazyShorts] [${getPlatformName()}] Video ended, preparing to skip...`);
 
     // Check if skip was already triggered (e.g., by dislike)
     if (skipAlreadyTriggered) {
-        console.log('[LazyShorts] Skip already triggered for this Short, ignoring video end');
+        console.log(`[LazyShorts] [${getPlatformName()}] Skip already triggered, ignoring video end`);
         return;
     }
-
-    // Find next button
-    const nextButton = findElement(SELECTORS.nextButton);
-
-    if (!nextButton) {
-        console.warn('[LazyShorts] Next button not found - trying keyboard navigation');
-
-        // Apply delay if configured, then try keyboard
-        const delay = settings.delaySeconds * 1000;
-        setTimeout(() => {
-            skipToNextShort('video-end');
-        }, delay);
-        return;
-    }
-
-    console.log('[LazyShorts] Next button found');
 
     // Apply delay if configured
     const delay = settings.delaySeconds * 1000;
 
     if (delay > 0) {
-        console.log(`[LazyShorts] Waiting ${settings.delaySeconds} seconds before skipping...`);
+        console.log(`[LazyShorts] [${getPlatformName()}] Waiting ${settings.delaySeconds} seconds before skipping...`);
         setTimeout(() => {
-            skipToNextShort('video-end');
+            skipToNextVideo('video-end');
         }, delay);
     } else {
-        skipToNextShort('video-end');
+        skipToNextVideo('video-end');
     }
 }
 
+// ============================================
+// PLATFORM-SPECIFIC NAVIGATION
+// ============================================
+
 /**
- * Skip to the next Short
+ * Skip to next video - platform-agnostic router
  * @param {string} source - What triggered the skip ('video-end' | 'dislike')
  */
-function skipToNextShort(source = 'video-end') {
-    console.log(`[LazyShorts] Skipping Short (source: ${source})`);
+function skipToNextVideo(source = 'video-end') {
+    console.log(`[LazyShorts] [${getPlatformName()}] Skipping video (source: ${source})`);
 
     // Mark skip as triggered to prevent double-skip
     skipAlreadyTriggered = true;
 
+    const platform = detectPlatform();
+    switch (platform) {
+        case PLATFORM.YOUTUBE:
+            skipYouTubeShort();
+            break;
+        case PLATFORM.TIKTOK:
+            skipTikTokVideo();
+            break;
+        default:
+            console.error('[LazyShorts] Unknown platform, cannot skip');
+    }
+}
+
+/**
+ * Skip to next YouTube Short
+ */
+function skipYouTubeShort() {
+    // Disable video loop before navigating
+    if (videoElement) {
+        videoElement.loop = false;
+    }
+
     // Try button click first
-    const nextButton = findElement(SELECTORS.nextButton);
+    const nextButton = findElement(YOUTUBE_SELECTORS.nextButton);
 
     if (nextButton) {
         try {
-            // Disable video loop before clicking
-            if (videoElement) {
-                videoElement.loop = false;
-            }
-
             nextButton.click();
-            console.log('[LazyShorts] Clicked "Next" button');
-
-            // Increment skip counter
+            console.log('[LazyShorts] [YouTube] Clicked "Next" button');
             incrementSkipCount();
 
-            // Verify navigation occurred after short delay
+            // Verify navigation occurred
             setTimeout(() => {
-                console.log('[LazyShorts] Current URL after click:', window.location.href);
+                console.log('[LazyShorts] [YouTube] Current URL after click:', window.location.href);
             }, 500);
 
             return;
         } catch (error) {
-            console.error('[LazyShorts] Failed to click "Next" button:', error);
+            console.error('[LazyShorts] [YouTube] Failed to click "Next" button:', error);
         }
     }
 
     // Fallback: keyboard navigation
+    console.warn('[LazyShorts] [YouTube] Next button not found, trying keyboard navigation');
     tryKeyboardNavigation();
+}
+
+/**
+ * Skip to next TikTok video
+ * Uses keyboard navigation (ArrowDown) as primary method
+ */
+function skipTikTokVideo() {
+    console.log('[LazyShorts] [TikTok] Attempting to skip to next video');
+
+    // Disable video loop before navigating
+    if (videoElement) {
+        videoElement.loop = false;
+    }
+
+    // Try navigation button first (if available)
+    const nextButton = findElement(TIKTOK_SELECTORS.nextButtonFallback);
+    if (nextButton) {
+        try {
+            nextButton.click();
+            console.log('[LazyShorts] [TikTok] Clicked navigation button');
+            incrementSkipCount();
+            return;
+        } catch (error) {
+            console.warn('[LazyShorts] [TikTok] Button click failed, trying keyboard:', error);
+        }
+    }
+
+    // Primary: TikTok uses keyboard navigation (ArrowDown)
+    try {
+        const keyEvent = new KeyboardEvent('keydown', {
+            key: 'ArrowDown',
+            code: 'ArrowDown',
+            keyCode: 40,
+            which: 40,
+            bubbles: true,
+            cancelable: true,
+            view: window
+        });
+
+        document.dispatchEvent(keyEvent);
+        console.log('[LazyShorts] [TikTok] ArrowDown key event dispatched');
+
+        incrementSkipCount();
+
+        // Verify navigation
+        setTimeout(() => {
+            console.log('[LazyShorts] [TikTok] URL after keyboard event:', window.location.href);
+        }, 500);
+    } catch (error) {
+        console.error('[LazyShorts] [TikTok] Navigation failed:', error);
+    }
 }
 
 /**
@@ -304,33 +466,70 @@ function tryKeyboardNavigation() {
         });
 
         document.dispatchEvent(keyEvent);
-        console.log('[LazyShorts] Arrow Down key event dispatched');
+        console.log(`[LazyShorts] [${getPlatformName()}] Arrow Down key event dispatched`);
 
-        // Increment skip counter
         incrementSkipCount();
 
         // Verify navigation
         setTimeout(() => {
-            console.log('[LazyShorts] URL after keyboard event:', window.location.href);
+            console.log(`[LazyShorts] [${getPlatformName()}] URL after keyboard event:`, window.location.href);
         }, 500);
     } catch (error) {
-        console.error('[LazyShorts] Keyboard navigation also failed:', error);
+        console.error(`[LazyShorts] [${getPlatformName()}] Keyboard navigation failed:`, error);
     }
 }
 
 // ============================================
-// SKIP ON DISLIKE FEATURE
+// DISLIKE/NOT-INTERESTED HANDLING
 // ============================================
 
 /**
- * Find like and dislike buttons with validation
+ * Initialize skip on dislike feature based on platform
+ */
+function initializeSkipOnDislike() {
+    const platform = detectPlatform();
+
+    switch (platform) {
+        case PLATFORM.YOUTUBE:
+            initializeYouTubeDislike();
+            break;
+        case PLATFORM.TIKTOK:
+            initializeTikTokNotInterested();
+            break;
+    }
+}
+
+/**
+ * Initialize YouTube dislike button detection
+ */
+function initializeYouTubeDislike() {
+    const maxAttempts = 50;
+    let attempts = 0;
+
+    const interval = setInterval(() => {
+        attempts++;
+
+        const { likeButton, dislikeButton } = findYouTubeLikeDislikeButtons();
+
+        if (likeButton && dislikeButton) {
+            clearInterval(interval);
+            attachYouTubeDislikeListener(likeButton, dislikeButton);
+        } else if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            console.warn('[LazyShorts] [YouTube] Like/dislike buttons not found after', maxAttempts, 'attempts');
+        }
+    }, 100);
+}
+
+/**
+ * Find YouTube like and dislike buttons with validation
  * @returns {{likeButton: HTMLElement|null, dislikeButton: HTMLElement|null}}
  */
-function findLikeDislikeButtons() {
-    const likeButton = findElement(SELECTORS.likeButton);
-    const dislikeButton = findElement(SELECTORS.dislikeButton);
+function findYouTubeLikeDislikeButtons() {
+    const likeButton = findElement(YOUTUBE_SELECTORS.likeButton);
+    const dislikeButton = findElement(YOUTUBE_SELECTORS.dislikeButton);
 
-    console.log('[LazyShorts] Button search results:', {
+    console.log('[LazyShorts] [YouTube] Button search results:', {
         likeFound: !!likeButton,
         dislikeFound: !!dislikeButton,
         likeLabel: likeButton?.getAttribute('aria-label'),
@@ -342,14 +541,11 @@ function findLikeDislikeButtons() {
         return { likeButton, dislikeButton };
     }
 
-    // Additional validation: check aria-labels to ensure correct identification
+    // Additional validation: check aria-labels
     if (likeButton && dislikeButton) {
         const likeLabel = likeButton.getAttribute('aria-label')?.toLowerCase() || '';
         const dislikeLabel = dislikeButton.getAttribute('aria-label')?.toLowerCase() || '';
 
-        // Support both English and German labels
-        // German: "liken" for like, "Mag ich nicht" for dislike
-        // English: "like" for like, "dislike" for dislike
         const isLikeButton = likeLabel.includes('like') || likeLabel.includes('liken');
         const isDislikeButton = dislikeLabel.includes('dislike') || dislikeLabel.includes('mag ich nicht');
 
@@ -358,133 +554,140 @@ function findLikeDislikeButtons() {
         }
     }
 
-    console.warn('[LazyShorts] Could not reliably identify like/dislike buttons');
     return { likeButton: null, dislikeButton: null };
 }
 
 /**
- * Attach click listener to the dislike button
+ * Attach click listener to YouTube dislike button
  */
-function attachDislikeListener() {
-    const { likeButton, dislikeButton } = findLikeDislikeButtons();
-
-    // Validate buttons
-    if (!likeButton || !dislikeButton) {
-        console.warn('[LazyShorts] Skip-on-dislike: Buttons not found, feature disabled for this Short');
-        return;
-    }
-
+function attachYouTubeDislikeListener(likeButton, dislikeButton) {
     if (likeButton === dislikeButton) {
-        console.error('[LazyShorts] CRITICAL: Like and dislike are same element! Feature disabled.');
+        console.error('[LazyShorts] [YouTube] CRITICAL: Like and dislike are same element!');
         return;
     }
 
-    console.log('[LazyShorts] Like/dislike buttons found:', {
+    console.log('[LazyShorts] [YouTube] Like/dislike buttons found:', {
         like: likeButton.getAttribute('aria-label'),
         dislike: dislikeButton.getAttribute('aria-label')
     });
 
     // Remove existing listeners to prevent duplicates
-    dislikeButton.removeEventListener('click', handleDislikeClick, true);
-    likeButton.removeEventListener('click', handleLikeClick, true);
+    dislikeButton.removeEventListener('click', handleYouTubeDislikeClick, true);
+    likeButton.removeEventListener('click', handleYouTubeLikeClick, true);
 
-    // Attach listener to DISLIKE button
-    dislikeButton.addEventListener('click', handleDislikeClick, { capture: true });
-
-    // Attach listener to LIKE button for verification (should never skip)
-    likeButton.addEventListener('click', handleLikeClick, { capture: true });
+    // Attach listeners
+    dislikeButton.addEventListener('click', handleYouTubeDislikeClick, { capture: true });
+    likeButton.addEventListener('click', handleYouTubeLikeClick, { capture: true });
 
     dislikeListenerAttached = true;
-    console.log('[LazyShorts] Dislike listener attached successfully');
+    console.log('[LazyShorts] [YouTube] Dislike listener attached successfully');
 }
 
 /**
- * Handle dislike button click
+ * Handle YouTube dislike button click
  * @param {Event} event
  */
-async function handleDislikeClick(event) {
-    console.log('[LazyShorts] Dislike button clicked');
+async function handleYouTubeDislikeClick(event) {
+    console.log('[LazyShorts] [YouTube] Dislike button clicked');
 
-    // Check if feature is enabled
     const skipOnDislike = await getSkipOnDislikeSetting();
-
     if (!skipOnDislike) {
-        console.log('[LazyShorts] Skip-on-dislike disabled in settings');
+        console.log('[LazyShorts] [YouTube] Skip-on-dislike disabled in settings');
         return;
     }
 
-    // Check if we already skipped for this Short
     if (skipAlreadyTriggered) {
-        console.log('[LazyShorts] Skip already triggered for this Short');
+        console.log('[LazyShorts] [YouTube] Skip already triggered');
         return;
     }
 
     // Check aria-pressed to determine if this is a dislike or un-dislike action
-    // IMPORTANT: YouTube updates aria-pressed BEFORE our click handler runs
-    // So after clicking to dislike: aria-pressed becomes "true"
-    // After clicking to un-dislike: aria-pressed becomes "false"
     const button = event.target.closest('button');
     const isNowDisliked = button?.getAttribute('aria-pressed') === 'true';
 
-    console.log('[LazyShorts] Button aria-pressed state:', isNowDisliked);
+    console.log('[LazyShorts] [YouTube] Button aria-pressed state:', isNowDisliked);
 
-    // Skip only when user has just DISLIKED (aria-pressed is now true)
-    // Don't skip when user is UN-disliking (aria-pressed is now false)
     if (!isNowDisliked) {
-        console.log('[LazyShorts] User is un-disliking (removing dislike), not skipping');
+        console.log('[LazyShorts] [YouTube] User is un-disliking, not skipping');
         return;
     }
 
-    // Trigger skip after brief delay for dislike animation
-    console.log('[LazyShorts] Triggering skip due to dislike');
-
+    console.log('[LazyShorts] [YouTube] Triggering skip due to dislike');
     setTimeout(() => {
-        skipToNextShort('dislike');
+        skipToNextVideo('dislike');
     }, 300);
 }
 
+/**
+ * Handle YouTube like button click (verification - should NEVER skip)
+ */
+function handleYouTubeLikeClick(event) {
+    console.log('[LazyShorts] [YouTube] Like button clicked - NO SKIP (intended)');
+}
 
 /**
- * Handle like button click (verification - should NEVER skip)
+ * Initialize TikTok "Not Interested" button detection
+ * Uses event delegation since buttons are dynamically loaded
+ */
+function initializeTikTokNotInterested() {
+    if (tikTokEventDelegationAttached) {
+        console.log('[LazyShorts] [TikTok] Event delegation already attached');
+        return;
+    }
+
+    // Use event delegation for dynamically loaded buttons
+    document.addEventListener('click', handleTikTokClick, { capture: true });
+    tikTokEventDelegationAttached = true;
+
+    console.log('[LazyShorts] [TikTok] Event delegation for Not Interested attached');
+}
+
+/**
+ * Handle clicks on TikTok page
  * @param {Event} event
  */
-function handleLikeClick(event) {
-    console.log('[LazyShorts] Like button clicked - NO SKIP (working as intended)');
-    // This function intentionally does NOT call skipToNextShort
-    // If skip behavior occurs after like, there's a bug in button identification
-}
+async function handleTikTokClick(event) {
+    // Build a combined selector from all dislike/not-interested selectors
+    const selectors = TIKTOK_SELECTORS.dislikeButton.join(',');
 
-/**
- * Initialize skip on dislike feature
- * Wait for buttons to appear (YouTube loads them dynamically)
- */
-function initializeSkipOnDislike() {
-    const maxAttempts = 50;
-    let attempts = 0;
-
-    const interval = setInterval(() => {
-        attempts++;
-
-        const { likeButton, dislikeButton } = findLikeDislikeButtons();
-
-        if (likeButton && dislikeButton) {
-            clearInterval(interval);
-            attachDislikeListener();
-        } else if (attempts >= maxAttempts) {
-            clearInterval(interval);
-            console.warn('[LazyShorts] Like/dislike buttons not found after', maxAttempts, 'attempts');
+    try {
+        const target = event.target.closest(selectors);
+        if (target) {
+            console.log('[LazyShorts] [TikTok] Not Interested/Dislike clicked');
+            await handleTikTokNotInterested();
         }
-    }, 100);
+    } catch (error) {
+        // Ignore selector errors (some selectors may be invalid)
+    }
 }
 
 /**
- * Reset skip flag and re-initialize for new Short
+ * Handle TikTok "Not Interested" action
  */
-function resetForNewShort() {
-    skipAlreadyTriggered = false;
-    dislikeListenerAttached = false;
-    console.log('[LazyShorts] Reset for new Short');
+async function handleTikTokNotInterested() {
+    const skipOnDislike = await getSkipOnDislikeSetting();
+
+    if (!skipOnDislike) {
+        console.log('[LazyShorts] [TikTok] Skip-on-dislike disabled in settings');
+        return;
+    }
+
+    if (skipAlreadyTriggered) {
+        console.log('[LazyShorts] [TikTok] Skip already triggered');
+        return;
+    }
+
+    console.log('[LazyShorts] [TikTok] Triggering skip due to Not Interested');
+
+    // TikTok typically auto-advances, but we ensure it and increment counter
+    setTimeout(() => {
+        skipToNextVideo('dislike');
+    }, 300);
 }
+
+// ============================================
+// HELPERS & UTILITIES
+// ============================================
 
 /**
  * Find element using fallback selectors
@@ -492,15 +695,19 @@ function resetForNewShort() {
  * @returns {HTMLElement|null}
  */
 function findElement(selectorArray) {
+    if (!selectorArray || !Array.isArray(selectorArray)) {
+        return null;
+    }
+
     for (const selector of selectorArray) {
         try {
             const element = document.querySelector(selector);
             if (element) {
-                console.log(`[LazyShorts] Element found with selector: ${selector}`);
+                console.log(`[LazyShorts] [${getPlatformName()}] Element found with selector: ${selector}`);
                 return element;
             }
         } catch (error) {
-            console.warn(`[LazyShorts] Invalid selector: ${selector}`, error);
+            // Silently ignore invalid selectors
         }
     }
     return null;
@@ -515,12 +722,14 @@ function disableVideoLoop() {
     try {
         if (videoElement.hasAttribute('loop')) {
             videoElement.removeAttribute('loop');
+            console.log(`[LazyShorts] [${getPlatformName()}] Removed loop attribute`);
         }
         if (videoElement.loop === true) {
             videoElement.loop = false;
+            console.log(`[LazyShorts] [${getPlatformName()}] Set loop property to false`);
         }
     } catch (e) {
-        console.warn('[LazyShorts] Could not disable loop:', e);
+        console.warn(`[LazyShorts] [${getPlatformName()}] Could not disable loop:`, e);
     }
 }
 
@@ -534,26 +743,24 @@ function setupContinuousLoopPrevention() {
     // Remove existing listeners if any
     removeContinuousLoopPrevention();
 
-    // Method 1: Check on every timeupdate (covers seeking/fast-forward)
+    // Method 1: Check on every timeupdate
     loopPreventionListener = () => {
         if (videoElement && videoElement.loop === true) {
-            console.log('[LazyShorts] Loop was re-enabled, disabling again');
+            console.log(`[LazyShorts] [${getPlatformName()}] Loop was re-enabled, disabling again`);
             videoElement.loop = false;
             videoElement.removeAttribute('loop');
         }
     };
     videoElement.addEventListener('timeupdate', loopPreventionListener);
-
-    // Also check on seeking events
     videoElement.addEventListener('seeking', loopPreventionListener);
     videoElement.addEventListener('seeked', loopPreventionListener);
 
-    // Method 2: MutationObserver to catch attribute changes
+    // Method 2: MutationObserver for attribute changes
     try {
         videoAttributeObserver = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'loop') {
-                    console.log('[LazyShorts] Loop attribute changed, removing it');
+                    console.log(`[LazyShorts] [${getPlatformName()}] Loop attribute changed, removing it`);
                     videoElement.removeAttribute('loop');
                     videoElement.loop = false;
                 }
@@ -565,9 +772,9 @@ function setupContinuousLoopPrevention() {
             attributeFilter: ['loop']
         });
 
-        console.log('[LazyShorts] Continuous loop prevention enabled (timeupdate + MutationObserver)');
+        console.log(`[LazyShorts] [${getPlatformName()}] Continuous loop prevention enabled`);
     } catch (e) {
-        console.warn('[LazyShorts] MutationObserver for loop failed:', e);
+        console.warn(`[LazyShorts] [${getPlatformName()}] MutationObserver for loop failed:`, e);
     }
 }
 
@@ -591,12 +798,11 @@ function removeContinuousLoopPrevention() {
  * Remove video event listener
  */
 function removeVideoListener() {
-    // Remove loop prevention
     removeContinuousLoopPrevention();
 
     if (videoElement && videoEndedListener) {
         videoElement.removeEventListener('ended', videoEndedListener);
-        console.log('[LazyShorts] Video listener removed');
+        console.log(`[LazyShorts] [${getPlatformName()}] Video listener removed`);
     }
     videoElement = null;
     videoEndedListener = null;
@@ -604,26 +810,33 @@ function removeVideoListener() {
 
 /**
  * Handle settings change events
- * @param {Object} changes 
- * @param {string} areaName 
+ * @param {Object} changes
+ * @param {string} areaName
  */
 function handleSettingsChange(changes, areaName) {
     if (areaName !== 'sync') return;
 
-    console.log('[LazyShorts] Settings changed:', changes);
+    console.log(`[LazyShorts] [${getPlatformName()}] Settings changed:`, changes);
 
-    // Update local settings
     for (const [key, { newValue }] of Object.entries(changes)) {
         settings[key] = newValue;
     }
 
-    // Re-setup auto-skip with new settings
     setupAutoSkip();
 }
 
 /**
- * Observe URL changes (YouTube is a Single Page Application)
- * Re-initialize when navigating to/from Shorts
+ * Reset skip flag and re-initialize for new video
+ */
+function resetForNewVideo() {
+    skipAlreadyTriggered = false;
+    dislikeListenerAttached = false;
+    console.log(`[LazyShorts] [${getPlatformName()}] Reset for new video`);
+}
+
+/**
+ * Observe URL changes (Both YouTube and TikTok are SPAs)
+ * Re-initialize when navigating between videos
  */
 function observeUrlChanges() {
     let lastUrl = window.location.href;
@@ -633,50 +846,56 @@ function observeUrlChanges() {
         const currentUrl = window.location.href;
 
         if (currentUrl !== lastUrl) {
-            console.log('[LazyShorts] URL changed:', currentUrl);
+            console.log(`[LazyShorts] [${getPlatformName()}] URL changed:`, currentUrl);
             lastUrl = currentUrl;
 
-            // Clear any pending re-initialization
             if (urlChangeTimeout) {
                 clearTimeout(urlChangeTimeout);
             }
 
-            // Debounce re-initialization to avoid multiple rapid calls
             urlChangeTimeout = setTimeout(() => {
-                if (isYouTubeShorts()) {
-                    console.log('[LazyShorts] Navigated to new Short, re-initializing...');
-                    resetForNewShort();
+                if (isTargetPage()) {
+                    console.log(`[LazyShorts] [${getPlatformName()}] Navigated to new video, re-initializing...`);
+                    resetForNewVideo();
                     setupAutoSkip();
                     initializeSkipOnDislike();
                 } else {
-                    console.log('[LazyShorts] Left Shorts page, cleaning up...');
+                    console.log(`[LazyShorts] [${getPlatformName()}] Left target page, cleaning up...`);
                     removeVideoListener();
                 }
-            }, 500); // Wait 500ms before re-initializing
+            }, 500);
         }
     });
 
-    // Observe the document for changes
     observer.observe(document.body, {
         childList: true,
         subtree: true
     });
 
-    console.log('[LazyShorts] URL observer attached');
+    console.log(`[LazyShorts] [${getPlatformName()}] URL observer attached`);
 }
 
 /**
- * Cleanup function (called when extension is disabled/unloaded)
+ * Cleanup function
  */
 function cleanup() {
     removeVideoListener();
     chrome.storage.onChanged.removeListener(handleSettingsChange);
-    console.log('[LazyShorts] Cleaned up');
+
+    if (tikTokEventDelegationAttached) {
+        document.removeEventListener('click', handleTikTokClick, { capture: true });
+        tikTokEventDelegationAttached = false;
+    }
+
+    console.log(`[LazyShorts] [${getPlatformName()}] Cleaned up`);
 }
+
+// ============================================
+// INITIALIZATION
+// ============================================
 
 // Initialize when script loads
 init();
 
 // Cleanup on unload
 window.addEventListener('beforeunload', cleanup);
-
