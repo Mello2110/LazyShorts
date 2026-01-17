@@ -5,6 +5,27 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-01-17
+
+### Added
+- 🎵 **TikTok Support**: Extension now works on TikTok in addition to YouTube Shorts
+- Platform detection system for seamless multi-platform experience
+- TikTok "Not Interested" button detection (skip-on-dislike equivalent)
+- Multiple fallback selectors for TikTok's dynamic DOM structure
+
+### Changed
+- Refactored content script with modular platform-specific code
+- Unified skip counter works across both YouTube and TikTok
+- All settings apply to both platforms
+
+### Technical Details
+- Added `PLATFORM` constant and `detectPlatform()` function
+- Separated selectors into `YOUTUBE_SELECTORS` and `TIKTOK_SELECTORS` objects
+- Implemented `skipYouTubeShort()` and `skipTikTokVideo()` platform-specific functions
+- TikTok uses ArrowDown keyboard navigation as primary skip method
+- Event delegation for TikTok button detection (handles dynamic content)
+- Enhanced logging with platform prefix: `[LazyShorts] [Platform]`
+
 ## [1.2.0] - 2026-01-11
 
 ### Added

@@ -1,17 +1,18 @@
 # LazyShorts
 
-**Automatically advance to the next YouTube Short when the current one finishes playing.**
+**Automatically advance to the next YouTube Short or TikTok video when the current one finishes playing.**
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-blue?logo=google-chrome)](https://chrome.google.com/webstore)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
-[![Version](https://img.shields.io/badge/version-1.2.0-orange)](#)
+[![Version](https://img.shields.io/badge/version-1.3.0-orange)](#)
 
 ---
 
 ## ✨ Features
 
-- 🚀 **Automatic Skipping**: Seamlessly advance to the next YouTube Short after the current one ends
-- 👎 **Skip on Dislike**: Automatically skip to the next Short when you click the dislike button
+- 🚀 **Automatic Skipping**: Seamlessly advance to the next YouTube Short or TikTok video after the current one ends
+- 🎵 **Multi-Platform**: Works on both YouTube Shorts and TikTok
+- 👎 **Skip on Dislike**: Automatically skip when you click dislike (YouTube) or "Not Interested" (TikTok)
 - ⏱️ **Configurable Delay**: Set a delay (0-5 seconds) before skipping
 - 📊 **Skip Counter**: Track how many Shorts have been automatically skipped
 - 🎨 **Clean UI**: Minimalist design inspired by YouTube's aesthetic
@@ -49,8 +50,8 @@
 
 ### Quick Start
 
-1. **Navigate to YouTube Shorts**: Visit [youtube.com/shorts](https://www.youtube.com/shorts)
-2. **Auto-skip works automatically**: When a Short finishes, the extension will advance to the next one
+1. **Navigate to YouTube Shorts or TikTok**: Visit [youtube.com/shorts](https://www.youtube.com/shorts) or [tiktok.com](https://www.tiktok.com)
+2. **Auto-skip works automatically**: When a video finishes, the extension will advance to the next one
 3. **Adjust settings**: Click the extension icon to enable/disable or configure delay
 
 ### Popup Controls
@@ -83,11 +84,11 @@ Access the settings page by clicking the settings icon in the popup, or right-cl
 
 LazyShorts uses a **content script** that runs only on YouTube Shorts pages:
 
-1. Detects when you're watching a Short
+1. Detects when you're watching a Short (YouTube) or video (TikTok)
 2. Monitors the video for the 'ended' event
-3. Finds the "Next" button using robust selectors (with fallbacks)
+3. Uses platform-specific navigation (button click or keyboard)
 4. Applies your configured delay
-5. Clicks the "Next" button to advance
+5. Advances to the next video
 
 The extension respects your settings in real-time—no page reload needed!
 
@@ -117,8 +118,8 @@ LazyShorts requests minimal permissions:
 | Permission | Why We Need It |
 |------------|----------------|
 | `storage` | Save your settings (enable/disable, delay, theme) |
-| `activeTab` | Allow the popup to interact with the current tab |
-| `*://*.youtube.com/*` | Run the auto-skip script only on YouTube Shorts pages |
+| `*://*.youtube.com/*` | Run the auto-skip script on YouTube Shorts pages |
+| `*://*.tiktok.com/*` | Run the auto-skip script on TikTok pages |
 
 We follow the **principle of least privilege**—only requesting what's absolutely necessary.
 
@@ -168,7 +169,7 @@ LazyShorts/
 ├── background/
 │   └── service-worker.js      # Background event handling
 ├── content/
-│   └── content.js             # YouTube Shorts auto-skip logic
+│   └── content.js             # Auto-skip logic (YouTube & TikTok)
 ├── popup/
 │   ├── popup.html             # Extension popup UI
 │   ├── popup.css              # Popup styles
@@ -238,6 +239,12 @@ This project is licensed under the **MIT License**. See [LICENSE](#) for details
 
 ## 📊 Version History
 
+### v1.3.0 (January 2026)
+- 🎵 **TikTok Support**: Extension now works on TikTok in addition to YouTube Shorts
+- Platform detection for seamless multi-platform experience
+- TikTok "Not Interested" button triggers skip
+- Refactored content script with modular platform-specific code
+
 ### v1.2.0 (January 2026)
 - 👎 **Skip on Dislike**: Automatically skip to next Short when you dislike a video
 - New toggle in popup and settings page
@@ -271,7 +278,7 @@ Potential features for future versions:
 - [ ] Custom keyboard shortcuts
 - [ ] Per-channel settings (whitelist/blacklist)
 - [ ] Skip intro animations
-- [ ] Analytics (local only, privacy-preserving)
+- [x] ~~TikTok support~~ ✅ Added in v1.3.0
 - [ ] Opera-specific optimizations
 
 ---
