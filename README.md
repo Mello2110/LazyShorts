@@ -4,7 +4,7 @@
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-blue?logo=google-chrome)](https://chrome.google.com/webstore)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
-[![Version](https://img.shields.io/badge/version-1.3.0-orange)](#)
+[![Version](https://img.shields.io/badge/version-1.4.0-orange)](#)
 
 ---
 
@@ -13,11 +13,13 @@
 - 🚀 **Automatic Skipping**: Seamlessly advance to the next YouTube Short or TikTok video after the current one ends
 - 🎵 **Multi-Platform**: Works on both YouTube Shorts and TikTok
 - 👎 **Skip on Dislike**: Automatically skip when you click dislike (YouTube) or "Not Interested" (TikTok)
-- ⏱️ **Configurable Delay**: Set a delay (0-5 seconds) before skipping
+- ⏱️ **Configurable Delay**: Set a delay (0-5 seconds) before skipping — accessible from popup or settings
+- ⏳ **Skip Countdown**: Visual countdown overlay on the video when delay is active
 - 📊 **Skip Counter**: Track how many Shorts have been automatically skipped
+- 🔔 **Toast Notifications**: Visual feedback when changing settings in the popup
 - 🎨 **Clean UI**: Minimalist design inspired by YouTube's aesthetic
 - 🌓 **Dark Mode**: Supports light, dark, and auto (system preference) themes
-- ⚡ **Lightweight**: Minimal performance impact (< 5% CPU, < 50MB memory)
+- ⚡ **Lightweight**: Minimal performance impact (<5% CPU, <50MB memory)
 - ⚙️ **Easy Toggle**: Quickly enable/disable from the extension popup
 - 🔒 **Privacy First**: No data collection, 100% offline after install
 - ♿ **Accessible**: Full keyboard navigation and screen reader support
@@ -58,10 +60,8 @@
 
 - **Toggle Switch**: Enable or disable auto-skip functionality
 - **Skip on Dislike Toggle**: Auto-skip when you dislike a video
-- **Settings Button**: Open the full settings page
-- **Support Button**: Buy the developer a coffee ☕
-
-- **Toggle Switch**: Enable or disable auto-skip functionality
+- **Delay Slider**: Quickly adjust the skip delay (0-5 seconds)
+- **Theme Toggle**: Switch between light and dark mode
 - **Settings Button**: Open the full settings page
 - **Support Button**: Buy the developer a coffee ☕
 
@@ -118,6 +118,8 @@ LazyShorts requests minimal permissions:
 | Permission | Why We Need It |
 |------------|----------------|
 | `storage` | Save your settings (enable/disable, delay, theme) |
+| `scripting` | Programmatically inject content script during SPA navigation |
+| `webNavigation` | Detect YouTube/TikTok SPA page transitions |
 | `*://*.youtube.com/*` | Run the auto-skip script on YouTube Shorts pages |
 | `*://*.tiktok.com/*` | Run the auto-skip script on TikTok pages |
 
@@ -167,7 +169,7 @@ If you encounter issues or have feature requests:
 LazyShorts/
 ├── manifest.json              # Extension configuration
 ├── background/
-│   └── service-worker.js      # Background event handling
+│   └── service-worker.js      # Background event handling & SPA injection
 ├── content/
 │   └── content.js             # Auto-skip logic (YouTube & TikTok)
 ├── popup/
@@ -180,8 +182,6 @@ LazyShorts/
 │   └── settings.js            # Settings interactions
 ├── styles/
 │   └── design-system.css      # Shared CSS variables
-├── utils/
-│   └── settings.js            # Settings utility module
 ├── icons/                     # Extension icons
 └── docs/                      # Documentation
 ```
@@ -239,6 +239,16 @@ This project is licensed under the **MIT License**. See [LICENSE](#) for details
 
 ## 📊 Version History
 
+### v1.4.0 (March 2026)
+- 🎯 **SPA Navigation Fix**: Works immediately when navigating from YouTube homepage to Shorts
+- ⏳ **Skip Countdown Overlay**: Visual "Skipping in 3…2…1…" when delay is active
+- 🎚️ **Delay Slider in Popup**: Quick access to delay setting directly in popup
+- 🔔 **Toast Notifications**: Visual feedback when changing settings
+- 🐛 Fixed light mode in popup and settings page
+- 🐛 Fixed memory leak in event listener cleanup
+- ⚡ Performance: Replaced heavy MutationObserver with lightweight URL polling
+- ⚡ Added debug log level system for cleaner production logs
+
 ### v1.3.0 (January 2026)
 - 🎵 **TikTok Support**: Extension now works on TikTok in addition to YouTube Shorts
 - Platform detection for seamless multi-platform experience
@@ -279,6 +289,7 @@ Potential features for future versions:
 - [ ] Per-channel settings (whitelist/blacklist)
 - [ ] Skip intro animations
 - [x] ~~TikTok support~~ ✅ Added in v1.3.0
+- [x] ~~Skip countdown overlay~~ ✅ Added in v1.4.0
 - [ ] Opera-specific optimizations
 
 ---

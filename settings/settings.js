@@ -14,6 +14,7 @@ const themeAuto = document.getElementById('themeAuto');
 const resetBtn = document.getElementById('resetBtn');
 const skipCountDisplay = document.getElementById('skipCountDisplay');
 const resetCountBtn = document.getElementById('resetCountBtn');
+const versionDisplay = document.getElementById('versionDisplay');
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -34,6 +35,11 @@ async function init() {
 
     // Load skip count
     await loadSkipCount();
+
+    // Display version from manifest
+    if (versionDisplay) {
+        versionDisplay.textContent = `Version ${chrome.runtime.getManifest().version}`;
+    }
 
     // Setup event listeners
     setupEventListeners();

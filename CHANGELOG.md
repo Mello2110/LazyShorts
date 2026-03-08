@@ -5,6 +5,30 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-08
+
+### Added
+- 🎯 **SPA Navigation Fix**: Extension now works immediately when navigating from YouTube homepage to Shorts — no refresh needed
+- ⏳ **Skip Countdown Overlay**: Visual "Skipping in 3…2…1…" overlay on the video when delay is configured
+- 🎚️ **Delay Slider in Popup**: Quick access to delay setting (0-5s) directly in the popup
+- 🔔 **Toast Notifications**: Visual feedback in popup when toggling settings
+- 📝 **Debug Log System**: Configurable log levels (OFF/ERROR/WARN/INFO/DEBUG) for cleaner production logs
+
+### Fixed
+- 🐛 **Light Mode**: Popup and settings page now properly support light theme (was hardcoded dark)
+- 🐛 **Memory Leak**: Event listeners on like/dislike buttons are now properly cleaned up during SPA navigation
+- 🐛 **Performance**: Replaced heavy MutationObserver (subtree on body) with lightweight setInterval for URL change detection
+- 🐛 **Loop Prevention**: Simplified from 3 event listeners (timeupdate/seeking/seeked) to MutationObserver only
+- 🐛 **Version Display**: Settings page now dynamically loads version from manifest (was hardcoded "1.2.1")
+- 🐛 **Inconsistent Defaults**: Service worker now includes all settings fields (skipOnDislike, skipCount)
+
+### Changed
+- Settings subtitle now mentions TikTok support
+- Removed unused `utils/settings.js` module (dead code)
+- Added `scripting` and `webNavigation` permissions for programmatic content script injection
+- Service worker now detects SPA navigations via `webNavigation.onHistoryStateUpdated`
+- Content script includes duplicate injection guard (`window.__lazyShorts_initialized`)
+
 ## [1.3.0] - 2026-01-17
 
 ### Added

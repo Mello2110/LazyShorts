@@ -1,11 +1,13 @@
 {
   "manifest_version": 3,
   "name": "LazyShorts",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Automatically advance to the next YouTube Short or TikTok video when it finishes playing",
   "author": "Mellow Solutions",
   "permissions": [
-    "storage"
+    "storage",
+    "scripting",
+    "webNavigation"
   ],
   "host_permissions": [
     "*://*.youtube.com/*",

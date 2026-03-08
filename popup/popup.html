@@ -49,8 +49,15 @@
       <span class="toggle__slider"></span>
       <span class="toggle__label">Skip on dislike</span>
     </label>
-  </main>
 
+    <div class="popup__delay">
+      <label for="delayRange" class="popup__delay-label">
+        Delay: <strong id="delayValue">0</strong>s
+      </label>
+      <input type="range" id="delayRange" class="popup__range" min="0" max="5" step="1" value="0"
+        aria-label="Delay in seconds">
+    </div>
+  </main>
 
   <div class="popup__stats">
     <span class="popup__stats-label">Shorts skipped:</span>
@@ -68,6 +75,9 @@
       </svg>
     </button>
   </footer>
+
+  <!-- Toast notification -->
+  <div class="popup__toast" id="toast" aria-live="polite"></div>
 
   <script src="popup.js"></script>
 </body>

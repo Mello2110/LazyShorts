@@ -15,8 +15,10 @@ LazyShorts enhances your YouTube Shorts and TikTok viewing experience by automat
 
 🚀 Auto-Skip: Seamlessly advance to the next YouTube Short or TikTok video when the current one ends
 👎 Skip on Dislike: Instantly skip to the next Short when you click dislike
-⏱️ Configurable Delay: Set a delay (0-5 seconds) before skipping
+⏱️ Configurable Delay: Set a delay (0-5 seconds) before skipping — accessible from popup or settings
+⏳ Skip Countdown: Visual "Skipping in 3…2…1…" countdown when delay is active
 📊 Skip Counter: Track how many Shorts have been automatically skipped
+🔔 Toast Notifications: Visual feedback when changing settings
 🌓 Dark Mode: Supports light, dark, and system preference themes
 ⚡ Lightweight: Minimal performance impact
 ⚙️ Easy Toggle: Quickly enable/disable from the popup
@@ -29,12 +31,20 @@ LazyShorts enhances your YouTube Shorts and TikTok viewing experience by automat
 
 💡 HOW IT WORKS:
 1. Install the extension
-2. Navigate to YouTube Shorts
+2. Navigate to YouTube Shorts or TikTok
 3. Videos will auto-advance when they finish
 4. Click dislike to instantly skip
 5. Customize settings via the popup
 
 Perfect for binge-watching Shorts without lifting a finger!
+
+🆕 WHAT'S NEW IN v1.4.0:
+- Works immediately on SPA navigation (no refresh needed!)
+- Visual countdown overlay when delay is active
+- Delay slider right in the popup
+- Toast notifications for settings changes
+- Light mode fixes for popup and settings
+- Performance improvements
 
 ---
 
@@ -53,7 +63,7 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 
 | File | Location | Purpose |
 |------|----------|---------|
-| Extension ZIP | `LazyShorts_v1.2.0.zip` | Main upload file |
+| Extension ZIP | `LazyShorts_v1.4.0.zip` | Main upload file |
 | Promo Tile (Small) | `store_assets/promo_small_440x280.png` | Small promotional tile |
 | Promo Tile (Marquee) | `store_assets/promo_marquee_1400x560.png` | Large banner tile |
 | Screenshot 1 | `store_assets/screenshot_1_popup.png` | Main popup view |
@@ -66,8 +76,8 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 ## Upload Checklist
 
 - [ ] Log into Chrome Web Store Developer Console
-- [ ] Create new item
-- [ ] Upload `LazyShorts_v1.2.0.zip`
+- [ ] Create new item or update existing
+- [ ] Upload `LazyShorts_v1.4.0.zip`
 - [ ] Fill in store listing details (above)
 - [ ] Upload promo tile (440x280)
 - [ ] Upload at least 1 screenshot (1280x800)
@@ -82,5 +92,7 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 - No external requests/network calls
 - All permissions are justified:
   - `storage`: Save user preferences
-  - `activeTab`: Access current tab URL
+  - `scripting`: Programmatically inject content script on SPA navigation
+  - `webNavigation`: Detect YouTube/TikTok SPA page transitions
   - Host permission `*://*.youtube.com/*`: Run on YouTube
+  - Host permission `*://*.tiktok.com/*`: Run on TikTok

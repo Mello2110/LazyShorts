@@ -6,20 +6,22 @@
 // DOM elements
 const enableToggle = document.getElementById('enableToggle');
 const skipOnDislikeToggle = document.getElementById('skipOnDislikeToggle');
+const delayRange = document.getElementById('delayRange');
+const delayValue = document.getElementById('delayValue');
 const settingsBtn = document.getElementById('settingsBtn');
 const coffeeBtn = document.getElementById('coffeeBtn');
 const skipCountDisplay = document.getElementById('skipCountDisplay');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
+const toastEl = document.getElementById('toast');
 
 // Current theme state
 let currentTheme = 'auto';
+let toastTimeout = null;
 
 /**
  * Initialize popup
  */
 async function init() {
-    console.log('[LazyShorts Popup] Initializing...');
-
     // Load current settings
     await loadSettings();
 
@@ -28,8 +30,6 @@ async function init() {
 
     // Setup event listeners
     setupEventListeners();
-
-    console.log('[LazyShorts Popup] Initialized');
 }
 
 /**
@@ -50,11 +50,17 @@ async function loadSettings() {
             skipOnDislikeToggle.checked = settings.skipOnDislike;
         }
 
+        // Update delay slider
+        if (delayRange) {
+            delayRange.value = settings.delaySeconds;
+        }
+        if (delayValue) {
+            delayValue.textContent = settings.delaySeconds;
+        }
+
         // Store and apply theme
         currentTheme = settings.darkMode;
         applyTheme(currentTheme);
-
-        console.log('[LazyShorts Popup] Settings loaded:', settings);
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to load settings:', error);
     }
@@ -67,7 +73,6 @@ async function loadSkipCount() {
     try {
         const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
         updateSkipCountDisplay(skipCount);
-        console.log('[LazyShorts Popup] Skip count loaded:', skipCount);
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to load skip count:', error);
     }
@@ -95,6 +100,12 @@ function setupEventListeners() {
         skipOnDislikeToggle.addEventListener('change', handleSkipOnDislikeToggle);
     }
 
+    // Delay slider
+    if (delayRange) {
+        delayRange.addEventListener('input', handleDelayInput);
+        delayRange.addEventListener('change', handleDelayChange);
+    }
+
     // Toggle dark mode
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', handleThemeToggle);
@@ -112,7 +123,6 @@ function setupEventListeners() {
 
 /**
  * Handle theme toggle button click
- * Cycles: auto -> light -> dark -> auto (or light <-> dark if already set)
  */
 async function handleThemeToggle() {
     // Determine effective current theme
@@ -128,7 +138,7 @@ async function handleThemeToggle() {
         await chrome.storage.sync.set({ darkMode: newTheme });
         currentTheme = newTheme;
         applyTheme(newTheme);
-        console.log('[LazyShorts Popup] Theme toggled to:', newTheme);
+        showToast(`Theme: ${newTheme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to toggle theme:', error);
     }
@@ -143,16 +153,11 @@ async function handleToggleChange(event) {
 
     try {
         await chrome.storage.sync.set({ enabled });
-        console.log('[LazyShorts Popup] Auto-skip', enabled ? 'enabled' : 'disabled');
-
-        // Visual feedback (optional)
-        showFeedback(enabled ? 'Auto-skip enabled' : 'Auto-skip disabled');
+        showToast(enabled ? '✓ Auto-skip enabled' : '✗ Auto-skip disabled');
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to update setting:', error);
-
-        // Revert toggle on error
         event.target.checked = !enabled;
-        showFeedback('Failed to update setting', 'error');
+        showToast('Failed to update setting', 'error');
     }
 }
 
@@ -165,12 +170,38 @@ async function handleSkipOnDislikeToggle(event) {
 
     try {
         await chrome.storage.sync.set({ skipOnDislike: enabled });
-        console.log('[LazyShorts Popup] Skip on dislike', enabled ? 'enabled' : 'disabled');
-        showFeedback(enabled ? 'Skip on dislike enabled' : 'Skip on dislike disabled');
+        showToast(enabled ? '✓ Skip on dislike enabled' : '✗ Skip on dislike disabled');
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to update skip on dislike:', error);
         event.target.checked = !enabled;
-        showFeedback('Failed to update setting', 'error');
+        showToast('Failed to update setting', 'error');
+    }
+}
+
+/**
+ * Handle delay slider input (live update label)
+ * @param {Event} event 
+ */
+function handleDelayInput(event) {
+    const value = parseInt(event.target.value, 10);
+    if (delayValue) {
+        delayValue.textContent = value;
+    }
+}
+
+/**
+ * Handle delay slider change (save to storage)
+ * @param {Event} event 
+ */
+async function handleDelayChange(event) {
+    const delaySeconds = parseInt(event.target.value, 10);
+
+    try {
+        await chrome.storage.sync.set({ delaySeconds });
+        showToast(`Delay: ${delaySeconds}s`);
+    } catch (error) {
+        console.error('[LazyShorts Popup] Failed to update delay:', error);
+        showToast('Failed to update delay', 'error');
     }
 }
 
@@ -181,9 +212,6 @@ function openSettings() {
     chrome.tabs.create({
         url: chrome.runtime.getURL('settings/settings.html')
     });
-
-    // Close popup after opening settings
-    // window.close();
 }
 
 /**
@@ -223,6 +251,12 @@ function handleStorageChange(changes, areaName) {
     if (changes.skipOnDislike && skipOnDislikeToggle) {
         skipOnDislikeToggle.checked = changes.skipOnDislike.newValue;
     }
+
+    // Update delay slider if changed
+    if (changes.delaySeconds) {
+        if (delayRange) delayRange.value = changes.delaySeconds.newValue;
+        if (delayValue) delayValue.textContent = changes.delaySeconds.newValue;
+    }
 }
 
 /**
@@ -238,14 +272,36 @@ function applyTheme(theme) {
 }
 
 /**
- * Show feedback message (optional enhancement)
- * @param {string} message 
+ * Show a toast notification
+ * @param {string} message - Toast message text
  * @param {string} type - 'success' | 'error'
  */
-function showFeedback(message, type = 'success') {
-    // Simple console log for now
-    // Could be enhanced with a toast notification
-    console.log(`[${type.toUpperCase()}] ${message}`);
+function showToast(message, type = 'success') {
+    if (!toastEl) return;
+
+    // Clear existing timeout
+    if (toastTimeout) {
+        clearTimeout(toastTimeout);
+    }
+
+    // Reset classes
+    toastEl.className = 'popup__toast';
+    toastEl.textContent = message;
+
+    if (type === 'error') {
+        toastEl.classList.add('popup__toast--error');
+    }
+
+    // Force reflow for animation restart
+    void toastEl.offsetWidth;
+
+    // Show
+    toastEl.classList.add('popup__toast--visible');
+
+    // Auto-hide after 2 seconds
+    toastTimeout = setTimeout(() => {
+        toastEl.classList.remove('popup__toast--visible');
+    }, 2000);
 }
 
 // Initialize on load

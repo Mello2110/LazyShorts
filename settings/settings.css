@@ -9,22 +9,35 @@
 
 .settings {
     min-height: 100vh;
-    background: linear-gradient(135deg,
-            #1a0a0d 0%,
-            /* Dark burgundy-black */
-            #1c1215 20%,
-            /* Subtle reddish dark */
-            #171a1c 40%,
-            /* Dark charcoal */
-            #141819 70%,
-            /* Deep charcoal-teal */
-            #121516 100%
-            /* Very dark teal-black */
-        );
+    background: var(--color-bg-primary);
     color: var(--color-text-primary);
     font-family: var(--font-family-base);
     margin: 0;
     padding: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    .settings {
+        background: linear-gradient(135deg,
+                #1a0a0d 0%,
+                #1c1215 20%,
+                #171a1c 40%,
+                #141819 70%,
+                #121516 100%);
+    }
+}
+
+[data-theme="dark"] .settings {
+    background: linear-gradient(135deg,
+            #1a0a0d 0%,
+            #1c1215 20%,
+            #171a1c 40%,
+            #141819 70%,
+            #121516 100%);
+}
+
+[data-theme="light"] .settings {
+    background: var(--color-bg-primary);
 }
 
 
