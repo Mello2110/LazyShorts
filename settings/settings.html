@@ -16,11 +16,11 @@
                 <img src="../icons/logo-small.png" alt="LazyShorts Logo" class="settings__logo">
                 <h1 class="settings__title">LazyShorts Settings</h1>
             </div>
-            <p class="settings__subtitle">Configure auto-skip behavior for YouTube Shorts & TikTok</p>
+            <p class="settings__subtitle">Configure auto-skip behavior for YouTube Shorts &amp; TikTok</p>
         </header>
 
         <main class="settings__body">
-            <!-- Enable/Disable Section -->
+            <!-- Master Auto-Skip Section -->
             <section class="settings__section">
                 <h2 class="settings__section-title">Auto-Skip</h2>
 
@@ -31,25 +31,45 @@
                 </label>
 
                 <p class="settings__help-text">
-                    When enabled, LazyShorts will automatically advance to the next Short when the current one finishes
-                    playing.
+                    When enabled, LazyShorts will automatically advance to the next video when the current one finishes playing.
                 </p>
 
+                <!-- Platform Specific Toggles -->
+                <div class="settings__subgroup">
+                    <h3 class="settings__subgroup-title">Supported Platforms</h3>
+
+                    <label class="toggle">
+                        <input type="checkbox" class="toggle__input" id="enableYouTubeToggle" aria-label="Enable on YouTube Shorts">
+                        <span class="toggle__slider"></span>
+                        <span class="toggle__label">YouTube Shorts</span>
+                    </label>
+
+                    <label class="toggle">
+                        <input type="checkbox" class="toggle__input" id="enableTikTokToggle" aria-label="Enable on TikTok">
+                        <span class="toggle__slider"></span>
+                        <span class="toggle__label">TikTok</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Dislike & Not Interested Section -->
+            <section class="settings__section">
+                <h2 class="settings__section-title">Dislike &amp; "Not Interested"</h2>
+
                 <label class="toggle">
-                    <input type="checkbox" class="toggle__input" id="skipOnDislikeToggle" aria-label="Skip on dislike">
+                    <input type="checkbox" class="toggle__input" id="skipOnDislikeToggle" aria-label="Skip on dislike or not interested">
                     <span class="toggle__slider"></span>
-                    <span class="toggle__label">Skip when you dislike</span>
+                    <span class="toggle__label">Skip when you give negative feedback</span>
                 </label>
 
                 <p class="settings__help-text">
-                    Automatically skip to the next Short when you click the dislike button.
+                    Automatically skips to the next video when you dislike, or when you click <strong>"Not interested"</strong> or <strong>"Don't recommend channel"</strong> in YouTube's three-dots menu or on TikTok.
                 </p>
             </section>
 
-
-            <!-- Delay Section -->
+            <!-- Delay & Countdown Section -->
             <section class="settings__section">
-                <h2 class="settings__section-title">Delay</h2>
+                <h2 class="settings__section-title">Delay &amp; Countdown</h2>
 
                 <div class="settings__control">
                     <label for="delayRange" class="settings__label">
@@ -58,7 +78,7 @@
                     <input type="range" id="delayRange" class="settings__range" min="0" max="5" step="1" value="0"
                         aria-label="Delay in seconds" aria-describedby="delayHelp">
                     <div class="settings__range-labels">
-                        <span>0s</span>
+                        <span>0s (Instant)</span>
                         <span>1s</span>
                         <span>2s</span>
                         <span>3s</span>
@@ -68,8 +88,7 @@
                 </div>
 
                 <p class="settings__help-text" id="delayHelp">
-                    Add a delay between the video ending and skipping to the next Short. Useful if you need time to
-                    react.
+                    Adds a countdown timer between video completion and navigation. You can click on the on-screen countdown pill at any time to cancel the auto-skip and keep watching.
                 </p>
             </section>
 
@@ -113,7 +132,7 @@
                 </button>
 
                 <p class="settings__help-text">
-                    This counts only automatic skips, not manual navigation.
+                    This counts automatic skips triggered by LazyShorts.
                 </p>
             </section>
 
@@ -122,7 +141,7 @@
                 <h2 class="settings__section-title">Reset Settings</h2>
 
                 <p class="settings__help-text">
-                    Reset all settings to their default values.
+                    Reset all settings back to their default values.
                 </p>
 
                 <button type="button" id="resetBtn" class="settings__button settings__button--danger">

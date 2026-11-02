@@ -5,6 +5,30 @@ All notable changes to LazyShorts will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-10-31
+
+### Fixed
+- 🐛 **Navigation Target Fix**: Removed loose/generic button selectors that accidentally triggered the creator 'Unfollow' / 'Deabonnieren' confirmation dialog on TikTok and YouTube.
+- 🛡️ **Safe Multi-Tiered Navigation**: YouTube navigation now strictly uses verified #navigation-button-down button, smooth reel container scrolling (scrollIntoView), and clean ArrowDown keyboard events.
+- 🎯 **Focus Protection**: Automatically blurs any active DOM element before navigating to prevent keyboard events from triggering focused UI controls.
+- ⚡ **Timeupdate Race Condition**: Prevented multiple parallel skip events during countdown delay by locking trigger state immediately on detection.
+
+## [1.5.0] - 2026-10-31
+
+### Added
+- 👎 **Modern YouTube Feedback Detection**: Seamless event delegation capturing 'Not interested' and 'Don't recommend channel' from YouTube's three-dots menu, fully resolving the removal of YouTube's standalone dislike button.
+- 🛑 **Interactive Countdown & Skip Cancellation**: Clicking the on-screen countdown pill or the 'Cancel ✕' button pauses auto-skip, letting you keep watching or replay.
+- ⚡ **Dual Video-End Detection Engine**: Combines standard HTML5 ended event with a millisecond 	imeupdate guard fallback right before YouTube player resets loop.
+- 🟢 **Live Tab Status Pill in Popup**: Immediate visual indicator in the popup showing whether LazyShorts is active on YouTube Shorts, TikTok, or inactive on the current page.
+- ⏩ **Quick Skip Button**: Jump to the next video directly from the popup with one click.
+- 🎛️ **Delay Preset Chips**: One-click delay options (0s Instant, 1s, 2s, 3s, 5s) alongside the slider.
+- 🌐 **Platform Controls**: Separate toggles for YouTube Shorts and TikTok in settings.
+
+### Changed
+- Complete redesign of the popup with modern cards, responsive typography, and improved visual hierarchy.
+- Replaced fragile 5-second polling loop for dislike buttons with instant event delegation.
+- Settings page updated with modern sub-headings and clear negative-feedback explanations.
+
 ## [1.4.0] - 2026-03-08
 
 ### Added

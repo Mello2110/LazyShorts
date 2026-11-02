@@ -7,6 +7,8 @@
 // Default settings
 const DEFAULT_SETTINGS = {
   enabled: true,
+  enableYouTube: true,
+  enableTikTok: true,
   delaySeconds: 0,
   darkMode: 'auto', // 'light' | 'dark' | 'auto'
   skipOnDislike: true,
@@ -14,14 +16,12 @@ const DEFAULT_SETTINGS = {
 };
 
 /**
- * Initialize default settings on extension install
+ * Initialize default settings on extension install or update
  */
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'install') {
     console.log('[LazyShorts] Extension installed - Setting up default configuration');
-    
     try {
-      // Set default settings
       await chrome.storage.sync.set(DEFAULT_SETTINGS);
       console.log('[LazyShorts] Default settings applied:', DEFAULT_SETTINGS);
     } catch (error) {
@@ -31,8 +31,23 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     const previousVersion = details.previousVersion;
     const currentVersion = chrome.runtime.getManifest().version;
     console.log(`[LazyShorts] Extension updated from v${previousVersion} to v${currentVersion}`);
-    
-    // Future: Add migration logic here if settings schema changes
+
+    // Ensure new settings fields exist for existing users
+    try {
+      const current = await chrome.storage.sync.get(null);
+      const updates = {};
+      for (const [key, val] of Object.entries(DEFAULT_SETTINGS)) {
+        if (current[key] === undefined) {
+          updates[key] = val;
+        }
+      }
+      if (Object.keys(updates).length > 0) {
+        await chrome.storage.sync.set(updates);
+        console.log('[LazyShorts] Migration applied new setting keys:', updates);
+      }
+    } catch (e) {
+      console.error('[LazyShorts] Failed to apply settings migration:', e);
+    }
   }
 });
 
@@ -76,7 +91,6 @@ async function isContentScriptActive(tabId) {
     const response = await chrome.tabs.sendMessage(tabId, { type: 'LAZY_SHORTS_PING' });
     return response && response.active === true;
   } catch (error) {
-    // No response means the content script is not running
     return false;
   }
 }
@@ -88,43 +102,33 @@ async function isContentScriptActive(tabId) {
  */
 async function injectContentScript(tabId, url) {
   try {
-    // First check if the content script is already active
     const alreadyActive = await isContentScriptActive(tabId);
-    
     if (alreadyActive) {
       console.log('[LazyShorts] Content script already active on tab', tabId);
       return;
     }
 
     console.log('[LazyShorts] Injecting content script into tab', tabId, 'for URL:', url);
-    
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
       files: ['content/content.js']
     });
-    
     console.log('[LazyShorts] Content script injected successfully into tab', tabId);
   } catch (error) {
-    // Common error: tab was closed or navigated away before injection completed
     console.warn('[LazyShorts] Failed to inject content script:', error.message);
   }
 }
 
 /**
  * Listen for SPA navigations (history.pushState / replaceState)
- * This fires when YouTube/TikTok navigate internally without a full page load
  */
 chrome.webNavigation.onHistoryStateUpdated.addListener(
   async (details) => {
-    // Only care about main frame navigations
     if (details.frameId !== 0) return;
-    
     const url = details.url;
-    
+
     if (isTargetUrl(url)) {
       console.log('[LazyShorts] SPA navigation detected to target URL:', url);
-      
-      // Small delay to let the page settle after SPA navigation
       setTimeout(() => {
         injectContentScript(details.tabId, url);
       }, 300);
@@ -139,20 +143,15 @@ chrome.webNavigation.onHistoryStateUpdated.addListener(
 );
 
 /**
- * Also listen for completed navigations (covers full page loads as fallback)
- * This is a safety net — the manifest content_scripts should handle most full loads,
- * but this catches edge cases like back/forward navigation.
+ * Also listen for completed navigations
  */
 chrome.webNavigation.onCompleted.addListener(
   async (details) => {
     if (details.frameId !== 0) return;
-    
     const url = details.url;
-    
+
     if (isTargetUrl(url)) {
       console.log('[LazyShorts] Full navigation completed to target URL:', url);
-      
-      // Delay slightly to avoid racing with manifest-based injection
       setTimeout(() => {
         injectContentScript(details.tabId, url);
       }, 500);
@@ -167,14 +166,11 @@ chrome.webNavigation.onCompleted.addListener(
 );
 
 /**
- * Handle messages from content scripts or popup
+ * Handle runtime messages
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('[LazyShorts] Message received:', message, 'from', sender);
-  
-  // Future: Add message handlers here if needed
-  
-  return false; // synchronous response
+  console.log('[LazyShorts] Message received in worker:', message, 'from', sender);
+  return false;
 });
 
 console.log('[LazyShorts] Service worker initialized with SPA navigation support');

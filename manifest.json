@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LazyShorts",
-  "version": "1.4.0",
+  "version": "1.5.1",
   "description": "Automatically advance to the next YouTube Short or TikTok video when it finishes playing",
   "author": "Mellow Solutions",
   "permissions": [
@@ -40,7 +40,7 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "LazyShorts - Auto-advance YouTube Shorts"
+    "default_title": "LazyShorts - Auto-advance Shorts & TikTok"
   },
   "options_page": "settings/settings.html",
   "icons": {

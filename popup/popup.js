@@ -1,6 +1,6 @@
 /**
  * LazyShorts Popup Script
- * Handles popup UI interactions
+ * Handles popup UI interactions, real-time status checking, and settings synchronization
  */
 
 // DOM elements
@@ -8,27 +8,28 @@ const enableToggle = document.getElementById('enableToggle');
 const skipOnDislikeToggle = document.getElementById('skipOnDislikeToggle');
 const delayRange = document.getElementById('delayRange');
 const delayValue = document.getElementById('delayValue');
+const masterToggleDesc = document.getElementById('masterToggleDesc');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const quickSkipBtn = document.getElementById('quickSkipBtn');
 const settingsBtn = document.getElementById('settingsBtn');
-const coffeeBtn = document.getElementById('coffeeBtn');
-const skipCountDisplay = document.getElementById('skipCountDisplay');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
+const skipCountDisplay = document.getElementById('skipCountDisplay');
+const presetChips = document.querySelectorAll('.popup__preset-chip');
 const toastEl = document.getElementById('toast');
 
-// Current theme state
+// Current state
 let currentTheme = 'auto';
 let toastTimeout = null;
+let activeTabId = null;
 
 /**
  * Initialize popup
  */
 async function init() {
-    // Load current settings
     await loadSettings();
-
-    // Load skip count
     await loadSkipCount();
-
-    // Setup event listeners
+    await checkTabStatus();
     setupEventListeners();
 }
 
@@ -45,20 +46,25 @@ async function loadSettings() {
         });
 
         // Update toggle states
-        enableToggle.checked = settings.enabled;
+        if (enableToggle) {
+            enableToggle.checked = settings.enabled;
+            updateMasterToggleDesc(settings.enabled);
+        }
+
         if (skipOnDislikeToggle) {
             skipOnDislikeToggle.checked = settings.skipOnDislike;
         }
 
-        // Update delay slider
+        // Update delay slider and preset chips
         if (delayRange) {
             delayRange.value = settings.delaySeconds;
         }
         if (delayValue) {
             delayValue.textContent = settings.delaySeconds;
         }
+        updateActivePresetChip(settings.delaySeconds);
 
-        // Store and apply theme
+        // Apply theme
         currentTheme = settings.darkMode;
         applyTheme(currentTheme);
     } catch (error) {
@@ -67,24 +73,107 @@ async function loadSettings() {
 }
 
 /**
+ * Update master toggle description text
+ */
+function updateMasterToggleDesc(isEnabled) {
+    if (!masterToggleDesc) return;
+    masterToggleDesc.textContent = isEnabled
+        ? 'Advances automatically when video ends'
+        : 'Auto-advance is paused';
+}
+
+/**
+ * Highlight active delay preset chip
+ */
+function updateActivePresetChip(delaySeconds) {
+    presetChips.forEach(chip => {
+        const chipDelay = parseInt(chip.getAttribute('data-delay'), 10);
+        if (chipDelay === delaySeconds) {
+            chip.classList.add('popup__preset-chip--active');
+        } else {
+            chip.classList.remove('popup__preset-chip--active');
+        }
+    });
+}
+
+/**
  * Load skip count from storage and update display
  */
 async function loadSkipCount() {
     try {
         const { skipCount = 0 } = await chrome.storage.sync.get('skipCount');
-        updateSkipCountDisplay(skipCount);
+        if (skipCountDisplay) {
+            skipCountDisplay.textContent = new Intl.NumberFormat().format(skipCount);
+        }
     } catch (error) {
         console.error('[LazyShorts Popup] Failed to load skip count:', error);
     }
 }
 
 /**
- * Update the skip count display with formatted number
- * @param {number} count 
+ * Check active tab to see if LazyShorts is active on it
  */
-function updateSkipCountDisplay(count) {
-    if (skipCountDisplay) {
-        skipCountDisplay.textContent = new Intl.NumberFormat().format(count);
+async function checkTabStatus() {
+    try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (!tabs || tabs.length === 0) {
+            setTabStatus('inactive', 'No active tab');
+            return;
+        }
+
+        const activeTab = tabs[0];
+        activeTabId = activeTab.id;
+        const url = activeTab.url || '';
+
+        // First attempt: ping content script on active tab
+        try {
+            const response = await chrome.tabs.sendMessage(activeTab.id, { type: 'GET_STATUS' });
+            if (response && response.isTargetPage) {
+                const name = response.platform === 'youtube' ? 'YouTube Shorts' : (response.platform === 'tiktok' ? 'TikTok' : 'Supported video');
+                if (response.active) {
+                    setTabStatus('active', `Active on ${name}`, true);
+                } else {
+                    setTabStatus('warning', `Paused for ${name}`, false);
+                }
+                return;
+            }
+        } catch (e) {
+            // Content script not answering (e.g. non-target page or needs page reload)
+        }
+
+        // Fallback check URL patterns
+        if (url.includes('youtube.com/shorts')) {
+            setTabStatus('warning', 'YouTube Shorts (Reload to activate)', false);
+        } else if (url.includes('tiktok.com')) {
+            setTabStatus('warning', 'TikTok (Reload to activate)', false);
+        } else {
+            setTabStatus('inactive', 'Inactive on this page', false);
+        }
+    } catch (error) {
+        setTabStatus('inactive', 'Inactive', false);
+    }
+}
+
+/**
+ * Update the status badge in popup header
+ */
+function setTabStatus(status, text, canSkip = false) {
+    if (!statusDot || !statusText) return;
+
+    statusDot.className = 'popup__status-dot';
+    statusText.textContent = text;
+
+    if (status === 'active') {
+        statusDot.classList.add('popup__status-dot--active');
+    } else if (status === 'warning') {
+        statusDot.classList.add('popup__status-dot--warning');
+    } else {
+        statusDot.classList.add('popup__status-dot--inactive');
+    }
+
+    if (quickSkipBtn) {
+        quickSkipBtn.disabled = !canSkip;
+        quickSkipBtn.title = canSkip ? 'Immediately skip to next video' : 'Available when watching YouTube Shorts or TikTok';
     }
 }
 
@@ -92,176 +181,124 @@ function updateSkipCountDisplay(count) {
  * Setup event listeners
  */
 function setupEventListeners() {
-    // Toggle auto-skip on/off
-    enableToggle.addEventListener('change', handleToggleChange);
+    // Master toggle
+    if (enableToggle) {
+        enableToggle.addEventListener('change', async (e) => {
+            const enabled = e.target.checked;
+            try {
+                await chrome.storage.sync.set({ enabled });
+                updateMasterToggleDesc(enabled);
+                showToast(enabled ? '✓ Auto-advance enabled' : '✗ Auto-advance paused');
+                await checkTabStatus();
+            } catch (err) {
+                e.target.checked = !enabled;
+                showToast('Failed to save setting', 'error');
+            }
+        });
+    }
 
-    // Toggle skip on dislike on/off
+    // Skip on dislike toggle
     if (skipOnDislikeToggle) {
-        skipOnDislikeToggle.addEventListener('change', handleSkipOnDislikeToggle);
+        skipOnDislikeToggle.addEventListener('change', async (e) => {
+            const skipOnDislike = e.target.checked;
+            try {
+                await chrome.storage.sync.set({ skipOnDislike });
+                showToast(skipOnDislike ? '✓ Skip on dislike enabled' : '✗ Skip on dislike disabled');
+            } catch (err) {
+                e.target.checked = !skipOnDislike;
+                showToast('Failed to save setting', 'error');
+            }
+        });
     }
 
     // Delay slider
     if (delayRange) {
-        delayRange.addEventListener('input', handleDelayInput);
-        delayRange.addEventListener('change', handleDelayChange);
+        delayRange.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            if (delayValue) delayValue.textContent = val;
+            updateActivePresetChip(val);
+        });
+
+        delayRange.addEventListener('change', async (e) => {
+            const delaySeconds = parseInt(e.target.value, 10);
+            await saveDelay(delaySeconds);
+        });
     }
 
-    // Toggle dark mode
+    // Preset chips
+    presetChips.forEach(chip => {
+        chip.addEventListener('click', async () => {
+            const delay = parseInt(chip.getAttribute('data-delay'), 10);
+            if (delayRange) delayRange.value = delay;
+            if (delayValue) delayValue.textContent = delay;
+            updateActivePresetChip(delay);
+            await saveDelay(delay);
+        });
+    });
+
+    // Quick skip button
+    if (quickSkipBtn) {
+        quickSkipBtn.addEventListener('click', async () => {
+            if (!activeTabId) return;
+            try {
+                await chrome.tabs.sendMessage(activeTabId, { type: 'SKIP_NOW' });
+                showToast('✓ Skipped to next video');
+            } catch (e) {
+                showToast('Failed to skip video', 'error');
+            }
+        });
+    }
+
+    // Theme toggle
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', handleThemeToggle);
     }
 
-    // Open settings page
-    settingsBtn.addEventListener('click', openSettings);
+    // Open settings
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            chrome.tabs.create({ url: chrome.runtime.getURL('settings/settings.html') });
+        });
+    }
 
-    // Open Buy Me a Coffee page
-    coffeeBtn.addEventListener('click', openCoffeePage);
-
-    // Listen for storage changes (sync with settings page)
+    // Storage sync listener
     chrome.storage.onChanged.addListener(handleStorageChange);
 }
 
 /**
- * Handle theme toggle button click
+ * Save delay value helper
  */
-async function handleThemeToggle() {
-    // Determine effective current theme
-    let effectiveTheme = currentTheme;
-    if (currentTheme === 'auto') {
-        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    // Toggle to opposite theme
-    const newTheme = effectiveTheme === 'dark' ? 'light' : 'dark';
-
-    try {
-        await chrome.storage.sync.set({ darkMode: newTheme });
-        currentTheme = newTheme;
-        applyTheme(newTheme);
-        showToast(`Theme: ${newTheme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
-    } catch (error) {
-        console.error('[LazyShorts Popup] Failed to toggle theme:', error);
-    }
-}
-
-/**
- * Handle toggle change
- * @param {Event} event 
- */
-async function handleToggleChange(event) {
-    const enabled = event.target.checked;
-
-    try {
-        await chrome.storage.sync.set({ enabled });
-        showToast(enabled ? '✓ Auto-skip enabled' : '✗ Auto-skip disabled');
-    } catch (error) {
-        console.error('[LazyShorts Popup] Failed to update setting:', error);
-        event.target.checked = !enabled;
-        showToast('Failed to update setting', 'error');
-    }
-}
-
-/**
- * Handle skip on dislike toggle change
- * @param {Event} event 
- */
-async function handleSkipOnDislikeToggle(event) {
-    const enabled = event.target.checked;
-
-    try {
-        await chrome.storage.sync.set({ skipOnDislike: enabled });
-        showToast(enabled ? '✓ Skip on dislike enabled' : '✗ Skip on dislike disabled');
-    } catch (error) {
-        console.error('[LazyShorts Popup] Failed to update skip on dislike:', error);
-        event.target.checked = !enabled;
-        showToast('Failed to update setting', 'error');
-    }
-}
-
-/**
- * Handle delay slider input (live update label)
- * @param {Event} event 
- */
-function handleDelayInput(event) {
-    const value = parseInt(event.target.value, 10);
-    if (delayValue) {
-        delayValue.textContent = value;
-    }
-}
-
-/**
- * Handle delay slider change (save to storage)
- * @param {Event} event 
- */
-async function handleDelayChange(event) {
-    const delaySeconds = parseInt(event.target.value, 10);
-
+async function saveDelay(delaySeconds) {
     try {
         await chrome.storage.sync.set({ delaySeconds });
-        showToast(`Delay: ${delaySeconds}s`);
-    } catch (error) {
-        console.error('[LazyShorts Popup] Failed to update delay:', error);
+        showToast(delaySeconds === 0 ? 'Delay: Instant (0s)' : `Delay: ${delaySeconds}s`);
+    } catch (err) {
         showToast('Failed to update delay', 'error');
     }
 }
 
 /**
- * Open settings page in new tab
+ * Handle theme toggle
  */
-function openSettings() {
-    chrome.tabs.create({
-        url: chrome.runtime.getURL('settings/settings.html')
-    });
-}
-
-/**
- * Open Buy Me a Coffee page in new tab
- */
-function openCoffeePage() {
-    chrome.tabs.create({
-        url: 'https://buymeacoffee.com/mellowsolutions'
-    });
-}
-
-/**
- * Handle storage changes from other sources (e.g., settings page)
- * @param {Object} changes 
- * @param {string} areaName 
- */
-function handleStorageChange(changes, areaName) {
-    if (areaName !== 'sync') return;
-
-    // Update toggle if enabled state changed
-    if (changes.enabled) {
-        enableToggle.checked = changes.enabled.newValue;
+async function handleThemeToggle() {
+    let effective = currentTheme;
+    if (currentTheme === 'auto') {
+        effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
-    // Update theme if darkMode changed
-    if (changes.darkMode) {
-        currentTheme = changes.darkMode.newValue;
-        applyTheme(currentTheme);
-    }
-
-    // Update skip count display if changed
-    if (changes.skipCount) {
-        updateSkipCountDisplay(changes.skipCount.newValue);
-    }
-
-    // Update skip on dislike toggle if changed
-    if (changes.skipOnDislike && skipOnDislikeToggle) {
-        skipOnDislikeToggle.checked = changes.skipOnDislike.newValue;
-    }
-
-    // Update delay slider if changed
-    if (changes.delaySeconds) {
-        if (delayRange) delayRange.value = changes.delaySeconds.newValue;
-        if (delayValue) delayValue.textContent = changes.delaySeconds.newValue;
+    const nextTheme = effective === 'dark' ? 'light' : 'dark';
+    try {
+        await chrome.storage.sync.set({ darkMode: nextTheme });
+        currentTheme = nextTheme;
+        applyTheme(nextTheme);
+        showToast(`Theme: ${nextTheme === 'dark' ? '🌙 Dark' : '☀️ Light'}`);
+    } catch (e) {
+        console.error('Failed to toggle theme:', e);
     }
 }
 
 /**
- * Apply theme to popup
- * @param {string} theme - 'light' | 'dark' | 'auto'
+ * Apply theme to document
  */
 function applyTheme(theme) {
     if (theme === 'auto') {
@@ -272,19 +309,43 @@ function applyTheme(theme) {
 }
 
 /**
- * Show a toast notification
- * @param {string} message - Toast message text
- * @param {string} type - 'success' | 'error'
+ * Listen for storage updates
+ */
+function handleStorageChange(changes, areaName) {
+    if (areaName !== 'sync') return;
+
+    if (changes.enabled && enableToggle) {
+        enableToggle.checked = changes.enabled.newValue;
+        updateMasterToggleDesc(changes.enabled.newValue);
+    }
+    if (changes.skipOnDislike && skipOnDislikeToggle) {
+        skipOnDislikeToggle.checked = changes.skipOnDislike.newValue;
+    }
+    if (changes.delaySeconds) {
+        const val = changes.delaySeconds.newValue;
+        if (delayRange) delayRange.value = val;
+        if (delayValue) delayValue.textContent = val;
+        updateActivePresetChip(val);
+    }
+    if (changes.darkMode) {
+        currentTheme = changes.darkMode.newValue;
+        applyTheme(currentTheme);
+    }
+    if (changes.skipCount && skipCountDisplay) {
+        skipCountDisplay.textContent = new Intl.NumberFormat().format(changes.skipCount.newValue);
+    }
+}
+
+/**
+ * Toast notifications
  */
 function showToast(message, type = 'success') {
     if (!toastEl) return;
 
-    // Clear existing timeout
     if (toastTimeout) {
         clearTimeout(toastTimeout);
     }
 
-    // Reset classes
     toastEl.className = 'popup__toast';
     toastEl.textContent = message;
 
@@ -292,17 +353,12 @@ function showToast(message, type = 'success') {
         toastEl.classList.add('popup__toast--error');
     }
 
-    // Force reflow for animation restart
     void toastEl.offsetWidth;
-
-    // Show
     toastEl.classList.add('popup__toast--visible');
 
-    // Auto-hide after 2 seconds
     toastTimeout = setTimeout(() => {
         toastEl.classList.remove('popup__toast--visible');
-    }, 2000);
+    }, 1800);
 }
 
-// Initialize on load
 document.addEventListener('DOMContentLoaded', init);

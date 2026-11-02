@@ -38,13 +38,14 @@ LazyShorts enhances your YouTube Shorts and TikTok viewing experience by automat
 
 Perfect for binge-watching Shorts without lifting a finger!
 
-🆕 WHAT'S NEW IN v1.4.0:
-- Works immediately on SPA navigation (no refresh needed!)
-- Visual countdown overlay when delay is active
-- Delay slider right in the popup
-- Toast notifications for settings changes
-- Light mode fixes for popup and settings
-- Performance improvements
+🆕 WHAT'S NEW IN v1.5.1:
+- Support for YouTube's updated UI: Full support for 'Not interested' and 'Don't recommend channel' in the 3-dots menu
+- Fixed navigation targeting to ensure creator unfollow / unsubscribe dialogs are never triggered
+- Interactive countdown overlay: Click to pause or cancel auto-skip anytime
+- New 'Next Video Now' Quick Action button in the popup
+- Real-time tab status badge in popup header
+- Fast delay preset chips (0s, 1s, 2s, 3s, 5s)
+- Dual-trigger video end engine with loop-freeze protection
 
 ---
 
@@ -63,7 +64,7 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 
 | File | Location | Purpose |
 |------|----------|---------|
-| Extension ZIP | `LazyShorts_v1.4.0.zip` | Main upload file |
+| Extension ZIP | `LazyShorts_v1.5.1.zip` | Main upload file |
 | Promo Tile (Small) | `store_assets/promo_small_440x280.png` | Small promotional tile |
 | Promo Tile (Marquee) | `store_assets/promo_marquee_1400x560.png` | Large banner tile |
 | Screenshot 1 | `store_assets/screenshot_1_popup.png` | Main popup view |
@@ -77,7 +78,7 @@ https://mello2110.github.io/lazyshorts-privacy-policy/
 
 - [ ] Log into Chrome Web Store Developer Console
 - [ ] Create new item or update existing
-- [ ] Upload `LazyShorts_v1.4.0.zip`
+- [ ] Upload `LazyShorts_v1.5.1.zip`
 - [ ] Fill in store listing details (above)
 - [ ] Upload promo tile (440x280)
 - [ ] Upload at least 1 screenshot (1280x800)
