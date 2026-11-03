@@ -20,7 +20,7 @@ architectureHighlights:
   - "Safe Multi-Tiered DOM Navigation with Focus Blurring Safeguards"
   - "Zero-Telemetry Architecture with 100% Client-Side Privacy"
 links:
-  chromeWebStore: ""
+  chromeWebStore: "https://chromewebstore.google.com/detail/lazyshorts/hjmljblglniihpkakmmckapbllfjhmbi?authuser=0&hl=de"
   demoUrl: ""
   githubUrl: "https://github.com/Mello2110/LazyShorts"
 sandbox:
@@ -38,11 +38,13 @@ stats:
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](#)
 [![Version](https://img.shields.io/badge/Version-v1.5.1-orange?style=flat-square)](#)
 [![Manifest](https://img.shields.io/badge/Manifest-V3-purple?style=flat-square)](#)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Available-blue?style=flat-square&logo=googlechrome)](https://chromewebstore.google.com/detail/lazyshorts/hjmljblglniihpkakmmckapbllfjhmbi?authuser=0&hl=de)
 
 > Hands-free auto-advance and intelligent skipping for YouTube Shorts and TikTok.
 
 <!-- QUICK ACCESS / CALL TO ACTION -->
 <p align="left">
+  <a href="https://chromewebstore.google.com/detail/lazyshorts/hjmljblglniihpkakmmckapbllfjhmbi?authuser=0&hl=de"><b>🛒 Chrome Web Store</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/Mello2110/LazyShorts"><b>📦 GitHub Repository</b></a> &nbsp;|&nbsp;
   <a href="https://github.com/Mello2110"><b>🌐 Mellow Solutions Hub</b></a>
 </p>
@@ -122,6 +124,12 @@ LazyShorts/
 ---
 
 ## 📦 Installation & Usage
+
+### From Chrome Web Store (Recommended)
+
+1. Open the [LazyShorts Chrome Web Store Page](https://chromewebstore.google.com/detail/lazyshorts/hjmljblglniihpkakmmckapbllfjhmbi?authuser=0&hl=de).
+2. Click **"Add to Chrome"** (Hinzufügen) and confirm permissions.
+3. Pin the **LazyShorts** icon to your toolbar for immediate access to quick toggles and delay settings.
 
 ### Developer Mode (Local Installation)
 
